@@ -10,3 +10,4 @@ PR_DESCRIPTION.md
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+.envrc

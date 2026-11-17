@@ -17,6 +17,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: applied migrations unchanged
+        # Migrations on the base branch are immutable: add a new one instead (CLAUDE.md).
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          changed=$(git diff --name-status --diff-filter=DMRT "$BASE_SHA" HEAD -- db/migrations)
+          if [ -n "$changed" ]; then
+            echo "::error::Migrations that already exist on the base branch were changed, renamed or deleted:"
+            echo "$changed"
+            exit 1
+          fi
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
