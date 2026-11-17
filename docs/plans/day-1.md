@@ -3,7 +3,7 @@
 **Done when:** spatial tests pass in CI; first PRs merged through the pipeline.
 **Limit:** at most 5 PRs; small setup steps merged together. Each PR < ~400 changed lines (seed CSVs, the cached GeoJSON and docs-only PRs flagged as exceptions).
 
-Bootstrapping: the repo starts with its first commit on `chore/kickoff-docs`, so `main` never gets a direct commit. Branch protection (ADR-004) is turned on by Adam after PR 2's CI has run once, since GitHub can only require checks it has seen.
+Bootstrapping: a GitHub PR needs a base branch with shared history, so `main` gets exactly one **empty** root commit ("chore: initialize repository", Adam's OK) and `chore/kickoff-docs` sits on top of it. Every file change after that goes through a PR. Branch protection (ADR-004) is turned on by Adam after PR 2's CI has run once, since GitHub can only require checks it has seen.
 
 | # | Branch | Scope | Acceptance criteria | Tests | Approvals |
 |---|---|---|---|---|---|
