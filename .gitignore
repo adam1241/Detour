@@ -7,3 +7,6 @@ __pycache__/
 .next/
 .DS_Store
 PR_DESCRIPTION.md
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/

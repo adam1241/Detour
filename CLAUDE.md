@@ -47,7 +47,22 @@ docs/            spec.md, adr/, plans/, review-checklist.md
 ```
 
 ## Commands
-_To be filled in on Day 1 once the tooling is chosen (install, dev, test, lint, typecheck, eval, seed)._
+Python 3.12 via `uv` (ADR-001). TypeScript tooling arrives with the web app on Day 3.
+
+| Task | Command |
+|---|---|
+| Install | `uv sync` |
+| Install git hooks | `uv run pre-commit install` |
+| All pre-commit checks | `uv run pre-commit run --all-files` |
+| Lint | `uv run ruff check .` |
+| Format | `uv run ruff format .` |
+| Type-check | `uv run mypy` |
+| Unit tests | `uv run pytest -m "not db"` |
+| Spatial/DB tests | `DATABASE_URL=postgresql://... uv run pytest -m db` (needs PostGIS; CI uses `postgis/postgis:16-3.4`) |
+
+Claude Code hooks (`.claude/settings.json`) block edits to `.env*` and to migrations already on `main`, and run unit tests after edits under `agent/`.
+
+_Still to add: dev, eval, seed._
 
 ## Definition of done
 - Acceptance criteria from the spec are met
