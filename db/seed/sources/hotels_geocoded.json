@@ -1,0 +1,122 @@
+{
+  "hotel_quality_inn_luray": {
+    "lon": -78.466758,
+    "lat": 38.666006,
+    "display_name": "Quality Inn, 410, West Main Street, IBR Valley Apartments/Rentals, Luray, Page County, Virginia, 22835, United States",
+    "osm": "way/315561865",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Quality+Inn+Luray%2C+Luray%2C+VA+22835&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "hotel_quality_inn_shenandoah_valley": {
+    "lon": -78.673389,
+    "lat": 38.650177,
+    "display_name": "Quality Inn Shenandoah Valley, 162, West Old Cross Road, New Market, Shenandoah County, Virginia, 22844, United States",
+    "osm": "way/921153924",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Quality+Inn+Shenandoah+Valley%2C+New+Market%2C+VA+22844&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "hotel_sleep_inn_staunton": {
+    "lon": -79.030783,
+    "lat": 38.125245,
+    "display_name": "Sleep Inn, 222, Jefferson Highway, Staunton, Augusta County, Virginia, 24401, United States",
+    "osm": "way/257574772",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Sleep+Inn+Staunton%2C+Staunton%2C+VA+24401&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "hotel_clarion_pointe_staunton_east": {
+    "lon": -79.047873,
+    "lat": 38.132486,
+    "display_name": "Clarion Pointe Staunton East, 200, Frontier Drive, Staunton, Augusta County, Virginia, 24401, United States",
+    "osm": "node/11022685366",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Clarion+Pointe+Staunton+East%2C+Staunton%2C+VA+24401&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "hotel_econo_lodge_waynesboro": {
+    "lon": -78.893469,
+    "lat": 38.069864,
+    "display_name": "Econo Lodge, 640, West Broad Street, Waynesboro, Virginia, 22980, United States",
+    "osm": "way/1173836624",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Econo+Lodge+Waynesboro%2C+Waynesboro%2C+VA+22980&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "hotel_comfort_inn_roanoke_airport": {
+    "lon": -79.970087,
+    "lat": 37.310075,
+    "display_name": "Comfort Inn Airport, 5070, Valley View Boulevard North, Roanoke, Virginia, 24012, United States",
+    "osm": "way/921144762",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Comfort+Inn+Airport%2C+Roanoke%2C+VA+24012&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "hotel_quality_inn_roanoke_airport": {
+    "lon": -79.993504,
+    "lat": 37.327745,
+    "display_name": "Quality Inn Roanoke Airport, 6626, Thirlane Road Northwest, Brax-Han Court, Roanoke, Roanoke County, Virginia, 24019, United States",
+    "osm": "way/359118753",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Quality+Inn+Roanoke+Airport%2C+Roanoke%2C+VA+24019&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "hotel_sleep_inn_tanglewood": {
+    "lon": -79.981891,
+    "lat": 37.223769,
+    "display_name": "Sleep Inn Tanglewood, 4045, Electric Road, Beulah Heights, Cave Spring, Roanoke County, Virginia, 24015, United States",
+    "osm": "way/258422083",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Sleep+Inn+Tanglewood%2C+Roanoke%2C+VA+24018&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "hotel_graystone_lodge_boone": {
+    "lon": -81.694112,
+    "lat": 36.204538,
+    "display_name": "Graystone Lodge, Ascend Hotel Collection, 2419, Snaggy Mountain Boulevard, Hodges Gap, Boone, Watauga County, North Carolina, 28607, United States",
+    "osm": "way/772817393",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Graystone+Lodge%2C+Boone%2C+NC+28607&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "hotel_sleep_inn_boone": {
+    "lon": -81.668224,
+    "lat": 36.215342,
+    "display_name": "Sleep Inn, 163, NC Highway 105 Extension, Horn in the West, Boone, Watauga County, North Carolina, 28607, United States",
+    "osm": "way/343025689",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Sleep+Inn%2C+Boone%2C+NC+28607&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "hotel_comfort_suites_boone": {
+    "lon": -81.673944,
+    "lat": 36.203687,
+    "display_name": "Comfort Suites, 1184, NC 105;US 221 Truck;US 321 Truck;US 421 Truck, Boone, Watauga County, North Carolina, 28607, United States",
+    "osm": "way/678986316",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Comfort+Suites+Boone%2C+Boone%2C+NC+28607&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "hotel_cambria_downtown_asheville": {
+    "lon": -82.555917,
+    "lat": 35.595509,
+    "display_name": "Cambria Hotel Downtown Asheville, 15, Page Avenue, Asheville, Buncombe County, North Carolina, 28801, United States",
+    "osm": "way/490234056",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Cambria+Hotel+Downtown+Asheville%2C+Asheville%2C+NC+28801&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "hotel_quality_inn_asheville_tunnel_rd": {
+    "lon": -82.528901,
+    "lat": 35.588711,
+    "display_name": "Quality Inn, 180, Tunnel Road, Asheville, Buncombe County, North Carolina, 28805, United States",
+    "osm": "way/273492801",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Quality+Inn%2C+Asheville%2C+NC+28805&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "hotel_econo_lodge_biltmore": {
+    "lon": -82.528701,
+    "lat": 35.587559,
+    "display_name": "Econo Lodge Biltmore, 190, Tunnel Road, Asheville, Buncombe County, North Carolina, 28805, United States",
+    "osm": "way/273399652",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Econo+Lodge+Biltmore%2C+Asheville%2C+NC+28805&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "hotel_rodeway_inn_asheville": {
+    "lon": -82.636958,
+    "lat": 35.561229,
+    "display_name": "Rodeway Inn, 8, Crowell Road, Sand Hill, Asheville, Buncombe County, North Carolina, 28806, United States",
+    "osm": "way/938751258",
+    "match": "hotel",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Rodeway+Inn+Asheville%2C+Asheville%2C+NC+28806&format=jsonv2&limit=3&countrycodes=us"
+  }
+}
