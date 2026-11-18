@@ -118,5 +118,45 @@
     "osm": "way/357956941",
     "match": "place",
     "geocode_url": "https://nominatim.openstreetmap.org/search?q=Hickory+Nut+Gap+Farm%2C+Fairview%2C+NC+28730&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_south_river_farm": {
+    "lon": -78.244712,
+    "lat": 38.915608,
+    "display_name": "Front Royal, VA",
+    "osm": null,
+    "match": "listing",
+    "geocode_url": "https://www.hipcamp.com/en-US/land/virginia-south-river-farm-campground-pw1hrwoe"
+  },
+  "stop_blue_quartz_winery": {
+    "lon": -78.282802,
+    "lat": 38.492325,
+    "display_name": "Etlan, VA",
+    "osm": null,
+    "match": "listing",
+    "geocode_url": "https://www.hipcamp.com/en-US/land/virginia-blue-quartz-winery-brewery-zwjh789x"
+  },
+  "stop_dices_spring_farm": {
+    "lon": -78.927666,
+    "lat": 38.295533,
+    "display_name": "Weyers Cave, VA",
+    "osm": null,
+    "match": "listing",
+    "geocode_url": "https://www.hipcamp.com/en-US/land/virginia-dices-spring-farm-camp-views-7rvhpq9w"
+  },
+  "stop_shipley_farms": {
+    "lon": -81.761045,
+    "lat": 36.245894,
+    "display_name": "Vilas, NC",
+    "osm": null,
+    "match": "listing",
+    "geocode_url": "https://www.hipcamp.com/en-US/land/north-carolina-campsites-at-shipley-farms-nelhrwmd"
+  },
+  "stop_far_flung_farm": {
+    "lon": -82.8301,
+    "lat": 35.5881,
+    "display_name": "Canton, NC",
+    "osm": null,
+    "match": "listing",
+    "geocode_url": "https://www.hipcamp.com/en-US/land/north-carolina-far-flung-farm-388lh5r7"
   }
 }

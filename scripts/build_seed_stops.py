@@ -4,7 +4,8 @@
 
 Input:  db/seed/sources/stops_observed.csv
         Name, type, address, published price and overnight policy, as stated on each place's
-        own website (`source_url`). See db/seed/README.md for the sourcing rules.
+        own website or, for RV overnight hosts, its own Hipcamp listing (`source_url`).
+        See db/seed/README.md for the sourcing rules.
 Output: db/seed/stops.csv (loader format) and db/seed/sources/stops_geocoded.json.
 
 Coordinates come from OpenStreetMap Nominatim, 1 request/second (ADR-002 amendment).
@@ -46,7 +47,18 @@ def main() -> None:
 
     geocoded: dict[str, dict[str, Any]] = {}
     for row in observed:
-        if row.get("geocode_query"):
+        if row.get("listing_lon") and row.get("listing_lat"):
+            # Coordinates published on the place's own listing (e.g. its Hipcamp page). Hosts
+            # may place the pin approximately; recorded as a "listing" match.
+            geocoded[row["id"]] = {
+                "lon": float(row["listing_lon"]),
+                "lat": float(row["listing_lat"]),
+                "display_name": row["address"],
+                "osm": None,
+                "match": "listing",
+                "geocode_url": row["source_url"],
+            }
+        elif row.get("geocode_query"):
             # Explicit query, used where OSM lacks the place or the default search picks the
             # wrong feature. Recorded as an "override" match for review.
             geocoded[row["id"]] = _result(_search(row["geocode_query"])[0], "override")
