@@ -58,11 +58,13 @@ Python 3.12 via `uv` (ADR-001). TypeScript tooling arrives with the web app on D
 | Format | `uv run ruff format .` |
 | Type-check | `uv run mypy` |
 | Unit tests | `uv run pytest -m "not db"` |
+| Apply migrations | `DATABASE_URL=postgresql://... uv run python -m db.migrate` |
+| Load seed data | `DATABASE_URL=postgresql://... uv run python -m db.seed.load_seed` |
 | Spatial/DB tests | `DATABASE_URL=postgresql://... uv run pytest -m db` (needs PostGIS; CI uses `postgis/postgis:16-3.4`) |
 
 Claude Code hooks (`.claude/settings.json`) block edits to `.env*` and to migrations already on `main`, and run unit tests after edits under `agent/`.
 
-_Still to add: dev, eval, seed._
+_Still to add: dev, eval._
 
 ## Definition of done
 - Acceptance criteria from the spec are met

@@ -1,0 +1,4 @@
+id,name,brand_segment,lon,lat,price_usd,points_per_night,amenities,source,source_url
+hotel_fixture_a,Fixture Hotel A (test data),economy,-78.46,38.66,89.00,8000,wifi;breakfast,test_fixture,https://example.com/fixture/hotel-a
+hotel_fixture_b,Fixture Hotel B (test data),midscale,-79.07,38.15,129.50,16000,wifi;pool,test_fixture,https://example.com/fixture/hotel-b
+hotel_fixture_c,Fixture Hotel C (test data),upscale,-82.55,35.60,219.00,30000,,test_fixture,https://example.com/fixture/hotel-c
