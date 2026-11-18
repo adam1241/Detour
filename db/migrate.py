@@ -14,6 +14,8 @@ import psycopg
 
 MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 NAME_RE = re.compile(r"^(\d{4})_[a-z0-9_]+\.sql$")
+# Arbitrary constant: one advisory lock key per database serialises concurrent migrators.
+MIGRATION_LOCK_KEY = 7_315_301
 
 
 def migration_files(directory: Path) -> list[Path]:
@@ -43,6 +45,14 @@ def apply_migrations(conn: psycopg.Connection, directory: Path = MIGRATIONS_DIR)
     if conn.info.transaction_status != psycopg.pq.TransactionStatus.IDLE:
         raise ValueError("apply_migrations needs an idle connection (no open transaction)")
     files = migration_files(directory)
+    conn.execute("SELECT pg_advisory_lock(%s)", (MIGRATION_LOCK_KEY,))
+    try:
+        return _apply_locked(conn, files)
+    finally:
+        conn.execute("SELECT pg_advisory_unlock(%s)", (MIGRATION_LOCK_KEY,))
+
+
+def _apply_locked(conn: psycopg.Connection, files: list[Path]) -> list[str]:
     with conn.transaction():
         conn.execute(
             "CREATE TABLE IF NOT EXISTS schema_migrations ("
@@ -67,7 +77,8 @@ def main() -> int:
     if not url:
         print("DATABASE_URL is not set", file=sys.stderr)
         return 1
-    with psycopg.connect(url, autocommit=True) as conn:
+    timeout = int(os.environ.get("DB_CONNECT_TIMEOUT", "10"))
+    with psycopg.connect(url, autocommit=True, connect_timeout=timeout) as conn:
         applied = apply_migrations(conn)
     print("applied: " + (", ".join(applied) if applied else "nothing (up to date)"))
     return 0

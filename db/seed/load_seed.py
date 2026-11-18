@@ -15,6 +15,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import psycopg
 
@@ -170,8 +171,9 @@ def _common_errors(row: HotelRow | StopRow, prefix: str) -> list[str]:
         errors.append(f"{row.id}: point ({row.lon}, {row.lat}) is outside the corridor bbox")
     if row.source not in SOURCES:
         errors.append(f"{row.id}: source must be one of {sorted(SOURCES)}")
-    if not row.source_url.startswith("https://"):
-        errors.append(f"{row.id}: source_url must start with https://")
+    url = urlsplit(row.source_url)
+    if url.scheme != "https" or not url.hostname:
+        errors.append(f"{row.id}: source_url must be an https:// URL with a host")
     return errors
 
 
@@ -246,6 +248,9 @@ def load(
     if errors:
         raise ValueError("invalid seed data:\n" + "\n".join(errors))
     check_sources(hotels, stops, allow_fixture=allow_fixture)
+    # Same lock order (by id) for every load, so concurrent loads can't deadlock.
+    hotels = sorted(hotels, key=lambda h: h.id)
+    stops = sorted(stops, key=lambda s: s.id)
     with conn.transaction(), conn.cursor() as cur:
         cur.executemany(
             HOTEL_UPSERT,
@@ -292,7 +297,9 @@ def main() -> int:
         return 1
     hotels = read_hotels(SEED_DIR / "hotels.csv")
     stops = read_stops(SEED_DIR / "stops.csv")
-    with psycopg.connect(url) as conn:
+    with psycopg.connect(
+        url, connect_timeout=int(os.environ.get("DB_CONNECT_TIMEOUT", "10"))
+    ) as conn:
         load(conn, hotels, stops)
     print(f"loaded {len(hotels)} hotels and {len(stops)} stops")
     return 0

@@ -185,6 +185,7 @@ Tracing: every run logs tool calls, order, latency, tokens, cost, prompt_version
 - [ADR-003](adr/003-spatial-search.md): PostGIS corridor search for v1; H3 documented as the scale path.
 - [ADR-004](adr/004-evals-merge-gate-and-tracing.md): custom pytest eval runner, merge gate with tolerance vs `main`, path-filtered eval runs, merge process without required approvals, tracing.
 - [ADR-005](adr/005-web-app-map-and-agent-invocation.md): Vercel Hobby, server-side SigV4 calls to AgentCore, streamed progress, MapLibre, plan hydration, per-IP rate limit.
+- [ADR-006](adr/006-database-migrations.md): plain numbered SQL migrations with a small tested runner (`db/migrate.py`); fix forward, no down-migrations.
 
 ---
 

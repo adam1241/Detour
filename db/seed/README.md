@@ -1,6 +1,9 @@
 # Seed data
 
-Sample data for the one v1 corridor (spec §6). `hotels.csv` and `stops.csv` hold the real sample rows; `fixtures/` holds 5 synthetic rows for tests only.
+Sample data for the one v1 corridor (spec §6).
+
+- `hotels.csv` and `stops.csv` will hold the real, sourced sample rows. **They are header-only for now**; the 15 + 15 sourced rows arrive in a follow-up PR once Adam has reviewed them and set the price/points tiers below.
+- `fixtures/` holds 5 synthetic rows used only by tests. They are not sample data: they're labelled "(test data)", tagged `source = test_fixture`, point at `example.com`, and the loader refuses them outside tests.
 
 ## Sourcing rules (spec §6.1, agreed 2026-11-18)
 

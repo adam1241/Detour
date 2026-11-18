@@ -104,6 +104,7 @@ HOTEL_SQL = (
         ("hotel_ok", Decimal("NaN"), "sample_public", "https://example.com"),
         ("hotel_ok", Decimal("90"), "scraped", "https://example.com"),
         ("hotel_ok", Decimal("90"), "sample_public", "http://example.com"),
+        ("hotel_ok", Decimal("90"), "sample_public", "https://"),
         ("bad id", Decimal("90"), "sample_public", "https://example.com"),
     ],
 )
@@ -113,6 +114,24 @@ def test_hotel_constraints_reject_bad_rows(
     apply_migrations(conn, MIGRATIONS_DIR)
     with pytest.raises(psycopg.errors.CheckViolation):
         conn.execute(HOTEL_SQL, (hotel_id, price, source, url))
+
+
+@pytest.mark.parametrize(
+    ("name", "lon", "lat"),
+    [("\t\n", -78.4, 38.6), ("X", -200.0, 38.6), ("X", -78.4, 95.0)],
+)
+def test_hotel_rejects_blank_name_and_invalid_coordinates(
+    conn: psycopg.Connection, name: str, lon: float, lat: float
+) -> None:
+    apply_migrations(conn, MIGRATIONS_DIR)
+    with pytest.raises(psycopg.errors.CheckViolation):
+        conn.execute(
+            "INSERT INTO hotels (id, name, brand_segment, geom, price_usd, points_per_night, "
+            "source, source_url) VALUES ('hotel_ok', %s, 'economy', "
+            "ST_SetSRID(ST_MakePoint(%s, %s), 4326), 90, 8000, 'sample_public', "
+            "'https://example.com')",
+            (name, lon, lat),
+        )
 
 
 def test_stop_cost_rejects_nan(conn: psycopg.Connection) -> None:

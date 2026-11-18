@@ -85,7 +85,10 @@ def test_good_rows_pass() -> None:
         ({"points_per_night": -1}, "points_per_night"),
         ({"source": "scraped"}, "source"),
         ({"source_url": "http://example.com"}, "source_url"),
+        ({"source_url": "https://"}, "source_url"),
+        ({"source_url": "https:///path"}, "source_url"),
         ({"name": " "}, "name"),
+        ({"name": "\t\n"}, "name"),
     ],
 )
 def test_bad_hotel_rejected(change: dict[str, Any], message: str) -> None:

@@ -21,7 +21,7 @@ Sources: [`docs/context-sources.md`](docs/context-sources.md).
 ## Docs
 
 - [Spec (v0.3)](docs/spec.md): source of truth
-- [ADRs](docs/adr/): 001 agent stack · 002 database and routing · 003 spatial search · 004 evals, merge gate, tracing · 005 web app, map, web↔agent API
+- [ADRs](docs/adr/): 001 agent stack · 002 database and routing · 003 spatial search · 004 evals, merge gate, tracing · 005 web app, map, web↔agent API · 006 database migrations
 - [Plans](docs/plans/)
 - [AI review checklist](docs/review-checklist.md)
 - [CLAUDE.md](CLAUDE.md): rules for AI-assisted work in this repo
