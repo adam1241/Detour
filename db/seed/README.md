@@ -3,7 +3,7 @@
 Sample data for the one v1 corridor (spec §6).
 
 - `hotels.csv`: **15 real Choice-brand hotels** along the corridor, with real rates for one sample night (see below). Built by `scripts/build_seed_hotels.py` from `sources/hotels_observed.csv`.
-- `stops.csv`: header-only for now; the 15 sourced host-style stops arrive in a follow-up PR.
+- `stops.csv`: **15 real host-style stops** (example places, not claimed Harvest Hosts members), each with a price or free-entry statement from its own website. Built by `scripts/build_seed_stops.py` from `sources/stops_observed.csv`.
 - `fixtures/` holds 5 synthetic rows used only by tests. They are not sample data: they're labelled "(test data)", tagged `source = test_fixture`, point at `example.com`, and the loader refuses them outside tests.
 
 ## Sourcing rules (spec §6.1, agreed 2026-11-18)
@@ -33,10 +33,27 @@ Choice brands mapped to our three tiers by STR chain scale:
 
 For comparison, 2024 U.S. average daily rates were about $89 (economy), $111 (midscale) and $149 (upper midscale) (Colliers, *2024 Hospitality Brand Performance Comparison*).
 
+## Stops: how they were sourced (2026-11-18)
+
+- Each place's **own website** was read (the `source_url`). Listings on Hipcamp, Harvest Hosts or tourism sites were not used as sources.
+- `est_cost_usd` = the lowest published adult price for the experience (tasting flight, admission, tour), or 0 where the page says entry or tours are free. Places with no published price (e.g. Grandfather Vineyard, Highland Brewing, Appalachian Mountain Brewery) were skipped.
+- Judgement call: Polyface Farm's page describes open-door self-guided visits with no fee listed; it is recorded as 0.
+- Mix: see the table below. No brewery published a price on its own site, so there are no `brewery` rows yet.
+- `overnight_ok` is **false for every stop**: none of the places found advertises RV or tent stays on its own website (Polyface explicitly forbids camping). Farms and wineries that do offer RV sites were only found on Hipcamp or Harvest Hosts.
+
+| Type | Count | Price range |
+|---|---|---|
+| museum | 10 | free–$36 |
+| winery | 3 | $20–$30 |
+| farm | 2 | free |
+
+Geocoding match per stop is in `sources/stops_geocoded.json`: `place` (the venue itself), `override` (explicit query in `stops_observed.csv`: Luray Caverns for the car museum; Markham, Fauquier County for Chateau O'Brien, whose road isn't in OSM) or `town` (Linden Vineyards: town centre, ~2 km off).
+
 ## Known gaps
 
 - No Choice hotel redeemable with points was found in Front Royal or DC for the sample night, so the first ~110 km (DC → Front Royal) has no hotel. Trips usually spend their first night further south.
-- Hotels are 0–15 km from the route (12 of 15 within 3 km), measured against `corridor_route.geojson`.
+- Hotels are 0–15 km from the route (12 of 15 within 3 km); stops 0–12 km (11 of 15 within 2 km), measured against `corridor_route.geojson`.
+- **No RV overnight hosts** (see above). Until that changes, RV trips get hotel overnights only.
 
 ## CSV format
 

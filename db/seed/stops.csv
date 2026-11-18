@@ -1,1 +1,16 @@
 id,name,type,lon,lat,overnight_ok,est_cost_usd,description,source,source_url
+stop_chateau_obrien,Chateau O'Brien at Northpoint,winery,-78.001941,38.904,false,30.00,Classic Collection tasting: 4-5 wines for $30 per person.,sample_public,https://chateauobrien.com/wine-tastings/
+stop_linden_vineyards,Linden Vineyards,winery,-78.075553,38.909,false,30.00,"Guided tastings Friday-Sunday, $30 per person; reservations recommended.",sample_public,https://www.lindenvineyards.com/reserve
+stop_virginia_beer_museum,Virginia Beer Museum,museum,-78.190721,38.918239,false,0,Free tours offered daily.,sample_public,https://www.virginiabeermuseum.com/
+stop_car_carriage_caravan_museum,Car & Carriage Caravan Museum at Luray Caverns,museum,-78.483562,38.663277,false,36.00,"Included in the $36 Luray Caverns adult ticket, with the caverns tour and Shenandoah Heritage Village.",sample_public,https://luraycaverns.com/
+stop_frontier_culture_museum,Frontier Culture Museum,museum,-79.045225,38.127549,false,12.00,Outdoor living-history museum; adult admission $12.,sample_public,https://frontiermuseum.org/?p=564
+stop_woodrow_wilson_library,Woodrow Wilson Presidential Library & Museum,museum,-79.068826,38.150633,false,20.00,Birthplace and presidential museum; adults $20.,sample_public,https://www.woodrowwilson.org/visit
+stop_polyface_farm,Polyface Farm,farm,-79.227395,38.118454,false,0,Open-door self-guided visits Monday-Saturday (no fee listed); the farm allows no overnight camping.,sample_public,https://polyfacefarm.com/farm-tours
+stop_barren_ridge_vineyards,Barren Ridge Vineyards,winery,-78.956026,38.133607,false,20.00,Wine flights $20-$25 in a tasting room with mountain views.,sample_public,https://www.barrenridgevineyards.com/visit-barren-ridge-vineyards
+stop_virginia_museum_of_transportation,Virginia Museum of Transportation,museum,-79.946824,37.273154,false,14.77,Rail and road history in a historic freight station; adults $14.77 including tax.,sample_public,https://vmt.org/admissions
+stop_taubman_museum,Taubman Museum of Art,museum,-79.938307,37.27278,false,0,Free general admission.,sample_public,https://www.taubmanmuseum.org/
+stop_hickory_ridge_museum,Hickory Ridge History Museum,museum,-81.669688,36.208387,false,8.00,Living-history homestead museum; adults $8.,sample_public,https://www.horninthewest.com/hickory-ridge-museum
+stop_blowing_rock_museum,Blowing Rock Art & History Museum,museum,-81.679306,36.130284,false,0,Admission is always free.,sample_public,https://www.blowingrockmuseum.org/plan
+stop_thomas_wolfe_memorial,Thomas Wolfe Memorial,museum,-82.551221,35.597551,false,8.00,Author's boyhood home; adults $8 plus tax.,sample_public,https://wolfememorial.com/
+stop_asheville_art_museum,Asheville Art Museum,museum,-82.55089,35.594551,false,20.00,$20 general admission (plus tax).,sample_public,https://www.ashevilleart.org/visit/
+stop_hickory_nut_gap_farm,Hickory Nut Gap Farm,farm,-82.36442,35.498739,false,0,Working regenerative farm with a farm store; free farm tours on its events calendar.,sample_public,https://hickorynutgap.com/pages/visit-the-farm
