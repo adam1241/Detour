@@ -8,7 +8,7 @@ CREATE TABLE hotels (
     name             text NOT NULL CHECK (btrim(name) <> ''),
     brand_segment    text NOT NULL CHECK (brand_segment IN ('economy', 'midscale', 'upscale')),
     geom             geometry(Point, 4326) NOT NULL,
-    price_usd        numeric(8, 2) NOT NULL CHECK (price_usd > 0),
+    price_usd        numeric(8, 2) NOT NULL CHECK (price_usd > 0 AND price_usd <> 'NaN'),
     points_per_night integer NOT NULL CHECK (points_per_night >= 0),
     amenities        text[] NOT NULL DEFAULT '{}',
     -- 'test_fixture' rows exist only in test databases; the loader refuses them elsewhere.
@@ -25,7 +25,7 @@ CREATE TABLE stops (
     type         text NOT NULL CHECK (type IN ('winery', 'farm', 'brewery', 'museum')),
     geom         geometry(Point, 4326) NOT NULL,
     overnight_ok boolean NOT NULL,
-    est_cost_usd numeric(8, 2) NOT NULL CHECK (est_cost_usd >= 0),
+    est_cost_usd numeric(8, 2) NOT NULL CHECK (est_cost_usd >= 0 AND est_cost_usd <> 'NaN'),
     description  text NOT NULL DEFAULT '',
     source       text NOT NULL CHECK (source IN ('sample_public', 'test_fixture')),
     source_url   text NOT NULL CHECK (source_url ~ '^https://')

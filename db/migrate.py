@@ -32,7 +32,16 @@ def migration_files(directory: Path) -> list[Path]:
 
 
 def apply_migrations(conn: psycopg.Connection, directory: Path = MIGRATIONS_DIR) -> list[str]:
-    """Apply pending migrations, each in its own transaction. Returns the versions applied."""
+    """Apply pending migrations, each committed in its own transaction. Returns versions applied.
+
+    Needs an idle autocommit connection: otherwise the per-migration transactions would be
+    savepoints inside one outer transaction, and a later failure could roll back earlier
+    migrations together with their ledger rows.
+    """
+    if not conn.autocommit:
+        raise ValueError("apply_migrations needs an autocommit connection")
+    if conn.info.transaction_status != psycopg.pq.TransactionStatus.IDLE:
+        raise ValueError("apply_migrations needs an idle connection (no open transaction)")
     files = migration_files(directory)
     with conn.transaction():
         conn.execute(

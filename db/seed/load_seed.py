@@ -138,6 +138,25 @@ def read_stops(path: Path) -> list[StopRow]:
     ]
 
 
+MAX_MONEY = Decimal("999999.99")  # largest value numeric(8, 2) can hold
+CENT = Decimal("0.01")
+
+
+def _money_error(value: Decimal, field: str, *, min_exclusive_zero: bool) -> str | None:
+    """Why `value` can't be stored exactly in numeric(8, 2) within range, or None if it can."""
+    if not value.is_finite():
+        return f"{field} must be a finite number, got {value}"
+    if value != value.quantize(CENT):
+        return f"{field} must have at most 2 decimal places, got {value}"
+    if value > MAX_MONEY:
+        return f"{field} must be <= {MAX_MONEY}, got {value}"
+    if min_exclusive_zero and value <= 0:
+        return f"{field} must be > 0, got {value}"
+    if not min_exclusive_zero and value < 0:
+        return f"{field} must be >= 0, got {value}"
+    return None
+
+
 def _common_errors(row: HotelRow | StopRow, prefix: str) -> list[str]:
     errors = []
     if not re.fullmatch(rf"{prefix}_[a-z0-9_]+", row.id):
@@ -169,16 +188,16 @@ def validate(hotels: Sequence[HotelRow], stops: Sequence[StopRow]) -> list[str]:
         errors += _common_errors(h, "hotel")
         if h.brand_segment not in BRAND_SEGMENTS:
             errors.append(f"{h.id}: brand_segment must be one of {sorted(BRAND_SEGMENTS)}")
-        if h.price_usd <= 0:
-            errors.append(f"{h.id}: price_usd must be > 0")
+        if price_error := _money_error(h.price_usd, "price_usd", min_exclusive_zero=True):
+            errors.append(f"{h.id}: {price_error}")
         if h.points_per_night < 0:
             errors.append(f"{h.id}: points_per_night must be >= 0")
     for s in stops:
         errors += _common_errors(s, "stop")
         if s.type not in STOP_TYPES:
             errors.append(f"{s.id}: type must be one of {sorted(STOP_TYPES)}")
-        if s.est_cost_usd < 0:
-            errors.append(f"{s.id}: est_cost_usd must be >= 0")
+        if cost_error := _money_error(s.est_cost_usd, "est_cost_usd", min_exclusive_zero=False):
+            errors.append(f"{s.id}: {cost_error}")
     return errors
 
 

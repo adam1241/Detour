@@ -107,6 +107,23 @@ def test_bad_stop_rejected(change: dict[str, Any], message: str) -> None:
     assert any(message in e for e in errors), errors
 
 
+@pytest.mark.parametrize("price", ["0.01", "129.50", "999999.99"])
+def test_hotel_prices_that_fit_numeric_8_2_pass(price: str) -> None:
+    assert validate([good_hotel(price_usd=Decimal(price))], []) == []
+
+
+@pytest.mark.parametrize("price", ["NaN", "Infinity", "-Infinity", "0.004", "10.005", "1000000"])
+def test_hotel_prices_not_finite_or_not_numeric_8_2_rejected(price: str) -> None:
+    errors = validate([good_hotel(price_usd=Decimal(price))], [])
+    assert any("price_usd" in e for e in errors), errors
+
+
+@pytest.mark.parametrize("cost", ["NaN", "Infinity", "0.001", "1000000"])
+def test_stop_costs_not_finite_or_not_numeric_8_2_rejected(cost: str) -> None:
+    errors = validate([], [good_stop(est_cost_usd=Decimal(cost))])
+    assert any("est_cost_usd" in e for e in errors), errors
+
+
 def test_duplicate_ids_rejected() -> None:
     errors = validate([good_hotel(), good_hotel()], [])
     assert any("duplicate id" in e for e in errors), errors
