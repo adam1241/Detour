@@ -59,4 +59,24 @@ Options for storing a cached corridor: a `corridor_routes` table, or a GeoJSON f
 
 ## Implementation note (2026-11-18)
 
-Built by `scripts/build_corridor.py`: towns geocoded with Nominatim, six legs routed with OSRM, saved to `db/seed/corridor_route.geojson` (one LineString per leg, 308 KB). Measured: **797.2 km, 637.8 min** DC → Asheville (car profile, no traffic, so real drive times will usually be longer). `get_route` joins legs between corridor towns rather than cutting the line at arbitrary points, since v1 origins and destinations are corridor towns.
+Built by `scripts/build_corridor.py` (run by hand; output committed; written atomically). It geocodes the seven towns, then routes the six legs **in both directions** with OSRM, because one-way roads and turn restrictions can make them differ. Measured (car profile, no traffic, so real drive times will usually be longer):
+
+| Direction | Distance | Duration |
+|---|---|---|
+| South: DC → Asheville | 797.2 km | 637.8 min |
+| North: Asheville → DC | 796.3 km | 637.0 min |
+
+`get_route` serves any two places on the corridor: town names (with aliases) or `[lon, lat]` points within 30 km of the route (the default `max_detour_km`), such as an overnight hotel. Points snap to the nearest route vertex; partial legs get OSRM's leg distance and duration prorated by geometry. Each direction uses its own cached legs. Errors carry a stable code (`outside_coverage`, `same_place`, `bad_waypoint`, `bad_place`) and the list of supported towns, so the agent can recover.
+
+## Amendment 2026-11-18: geocoding provider
+
+**Context.** The corridor waypoints (and later the seed rows' addresses) need coordinates. This is a one-off, low-volume need at build time, never at runtime.
+
+**Options.**
+- **OpenStreetMap Nominatim (public):** free, no key, same OSM data as OSRM. Usage policy: at most 1 request/second, identifying User-Agent, no bulk use.
+- **Mapbox or Google geocoding:** accurate, but needs an account, an API key (a secret) and has licence terms on storing results.
+- **Coordinates typed by hand:** no service, but not traceable to a source, which breaks the "no invented data" rule.
+
+**Decision.** Nominatim, at build time only, 1 request/second, generic User-Agent, with the request URL stored next to each result as its source. Approved by Adam as part of the seed-sourcing defaults on 2026-11-18 (point 3).
+
+**Consequences.** No new secret or account. Results are traceable (`source_url` per town). Attribution "© OpenStreetMap contributors (ODbL)" is shown in the README and, later, on the map.

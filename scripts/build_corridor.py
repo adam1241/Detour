@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import os
 import time
 import urllib.parse
 import urllib.request
@@ -90,35 +91,43 @@ def main() -> None:
 
     features = []
     names = [name for name, _ in TOWNS]
-    for start, end in itertools.pairwise(names):
-        leg = route_leg(towns[start], towns[end])
-        print(f"routed {start} -> {end}: {leg['distance_km']} km, {leg['duration_min']} min")
-        features.append(
-            {
-                "type": "Feature",
-                "geometry": {"type": "LineString", "coordinates": leg["coordinates"]},
-                "properties": {
-                    "from": start,
-                    "to": end,
-                    "distance_km": leg["distance_km"],
-                    "duration_min": leg["duration_min"],
-                    "source_url": leg["source_url"],
-                },
-            }
-        )
-        time.sleep(1.1)
+    # Route both directions: one-way roads and turn restrictions can make them differ.
+    directions = {"south": names, "north": names[::-1]}
+    for direction, order in directions.items():
+        for start, end in itertools.pairwise(order):
+            leg = route_leg(towns[start], towns[end])
+            print(f"routed {start} -> {end}: {leg['distance_km']} km, {leg['duration_min']} min")
+            features.append(
+                {
+                    "type": "Feature",
+                    "geometry": {"type": "LineString", "coordinates": leg["coordinates"]},
+                    "properties": {
+                        "direction": direction,
+                        "from": start,
+                        "to": end,
+                        "distance_km": leg["distance_km"],
+                        "duration_min": leg["duration_min"],
+                        "source_url": leg["source_url"],
+                    },
+                }
+            )
+            time.sleep(1.1)
 
     collection = {
         "type": "FeatureCollection",
         "properties": {
-            "description": "Detour v1 corridor, one feature per town-to-town leg (ADR-002).",
+            "description": "Detour v1 corridor: one feature per town-to-town leg, routed in "
+            "both directions (south = DC to Asheville, north = Asheville to DC). ADR-002.",
             "attribution": "Map data © OpenStreetMap contributors (ODbL). "
             "Routing: OSRM demo server, car profile. Geocoding: Nominatim.",
             "towns": towns,
         },
         "features": features,
     }
-    OUT.write_text(json.dumps(collection, separators=(",", ":")) + "\n", encoding="utf-8")
+    # Write to a temp file and swap it in, so readers never see a half-written cache.
+    tmp = OUT.with_suffix(".geojson.tmp")
+    tmp.write_text(json.dumps(collection, separators=(",", ":")) + "\n", encoding="utf-8")
+    os.replace(tmp, OUT)
     print(f"wrote {OUT} ({OUT.stat().st_size // 1024} KB)")
 
 
