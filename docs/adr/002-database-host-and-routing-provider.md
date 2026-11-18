@@ -56,3 +56,7 @@ Options for storing a cached corridor: a `corridor_routes` table, or a GeoJSON f
 - The cache-building script is run by hand and its output committed; re-running it is a reviewed PR.
 - RV drive times may be optimistic (car profile). Tracked as a known limitation; an RV multiplier can be added later via ADR.
 - If Neon's cold start shows up in the < 3s first-progress target, send the first progress event before the first DB query.
+
+## Implementation note (2026-11-18)
+
+Built by `scripts/build_corridor.py`: towns geocoded with Nominatim, six legs routed with OSRM, saved to `db/seed/corridor_route.geojson` (one LineString per leg, 308 KB). Measured: **797.2 km, 637.8 min** DC → Asheville (car profile, no traffic, so real drive times will usually be longer). `get_route` joins legs between corridor towns rather than cutting the line at arbitrary points, since v1 origins and destinations are corridor towns.
