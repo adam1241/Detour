@@ -20,7 +20,7 @@ Sources: [`docs/context-sources.md`](docs/context-sources.md).
 
 ## Docs
 
-- [Spec (v0.2)](docs/spec.md): source of truth
+- [Spec (v0.3)](docs/spec.md): source of truth
 - [ADRs](docs/adr/): 001 agent stack · 002 database and routing · 003 spatial search · 004 evals, merge gate, tracing · 005 web app, map, web↔agent API
 - [Plans](docs/plans/)
 - [AI review checklist](docs/review-checklist.md)
@@ -30,4 +30,4 @@ Sources: [`docs/context-sources.md`](docs/context-sources.md).
 
 _Filled in on Day 4: pipeline diagram, example PRs (including human overrides of AI suggestions), eval history and an AI-usage note._
 
-**Merge process, stated openly:** branch protection requires pull requests and passing status checks (CI, plus evals when the agent, prompts or evals change), but **not** an approving review. GitHub doesn't let a PR author approve their own PR, and Adam is the only human on the project. Adam is the only one who merges and leaves a written review comment on every PR. The Claude code review is advisory. See [ADR-004](docs/adr/004-evals-merge-gate-and-tracing.md).
+**Merge process, stated openly:** branch protection requires pull requests and passing status checks (CI, plus evals when the agent, prompts or evals change), but **not** an approving review. GitHub doesn't let a PR author approve their own PR, and Adam is the only human on the project. Adam is the only one who merges and leaves a written review comment on every PR. The AI code review (OpenAI Codex) is advisory. See [ADR-004](docs/adr/004-evals-merge-gate-and-tracing.md).
