@@ -7,7 +7,7 @@
 > **Note:** Unofficial proof of concept. Not affiliated with or endorsed by Choice Hotels International or Harvest Hosts. All hotel and host data in this repo is a hand-curated *sample* from public information, with a source URL on every row. Host places are **example host-style stops**: we never claim that a business is a Harvest Hosts member. No logos or trademarks are used as branding.
 
 ### Changelog
-- **v0.3 (2026-11-18):** AI code reviewer switched from Claude to OpenAI Codex (`openai/codex-action`), key in `OPENAI_API_KEY` (ADR-004). The planner agent stays Claude on Bedrock.
+- **v0.3 (2026-11-18):** AI code reviewer switched from Claude to OpenAI Codex (`openai/codex-action`, pinned SHA, `pull_request_target` with trusted base policy), key in `OPENAI_API_KEY` in the `ai-review` environment (ADR-004 amendment). The planner agent stays Claude on Bedrock.
 - **v0.2 (2026-11-17):** Applied kickoff answers. Added `vehicle` input (rv/car); defined days vs nights, budget (lodging only) and points (redemption); removed weather from reasons and the feedback table; fixed corridor waypoints and cached corridor route; `max_detour_km` default 30; new latency targets (first progress < 3s, plan < 45s); replan scope ("affected" days); infeasible-case eval rule and main-comparison tolerance; merge process without required approvals; cost controls; ADR-004 and ADR-005 added; business context sources added; Day 1 capped at 5 PRs.
 - **v0.1:** Kickoff draft.
 

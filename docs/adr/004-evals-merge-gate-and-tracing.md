@@ -51,16 +51,20 @@ Spec §8.1 gates merges on eval scores and on comparison with `main`. Problems t
 
 ### Amendment 2026-11-18: AI code reviewer
 
-**Context.** The advisory AI review (spec §9.6.2) was first built on `anthropics/claude-code-action`. Adam chose OpenAI for the reviewer and set `OPENAI_API_KEY`.
+**Context.** The advisory AI review (spec §9, item 6 "PR pipeline", step 2) was first built on `anthropics/claude-code-action`. Adam chose OpenAI for the reviewer and set `OPENAI_API_KEY`.
 
 **Options.** (a) Keep Claude: one vendor, same model family that writes the code. (b) OpenAI Codex via the official `openai/codex-action`: a second vendor reviewing Claude-written code (more independent), Adam's preference on cost/quality.
 
-**Decision.** (b). `openai/codex-action@v1`, model left to the action's default (pin later if reviews vary). The planner agent stays Claude on Bedrock; this only changes the reviewer.
+**Decision.** (b). `openai/codex-action` pinned to a full commit SHA (v1.14), model left to the action's default (pin later if reviews vary). The planner agent stays Claude on Bedrock; this only changes the reviewer.
 
-**Security design** (`.github/workflows/ai-review.yml`):
-- Job `review` (read-only token): a trusted step fetches the diff; Codex runs as the **last step** with `safety-strategy: drop-sudo` (the action's guidance for keeping the API key out of reach) and `sandbox: read-only` (no writes, no network). Codex cannot post.
-- Job `post` (fresh runner, write token): scans the answer for credential-like strings, then posts or updates one comment marked `<!-- detour-ai-review -->`.
-- Only same-repository, non-draft PRs are reviewed.
+**Security design** (`.github/workflows/ai-review.yml`). The PR is untrusted data; nothing from it is executed or trusted.
+- **Trigger `pull_request_target`:** the workflow always runs from the base branch's definition, so a PR can't edit the steps that hold the API key or the write token. Only same-repository, non-draft PRs are reviewed; title/description edits re-trigger it.
+- **Trusted policy and working directory:** the job checks out the base commit. `CLAUDE.md`, `docs/spec.md` and `docs/review-checklist.md` come from there, so a PR can't rewrite the rules it's judged by. The PR's tree at the event's head SHA is exported under `.ai-review/pr/` as data (any `AGENTS.md` in it renamed), and the diff and metadata are built from the same immutable SHAs.
+- **Codex** runs as the **last step** of the read-only job, with `safety-strategy: drop-sudo` (the action's guidance for keeping the key out of reach) and `sandbox: read-only` (no writes, no network). It can't post.
+- **Job `post`** (fresh runner, write token): rejects answers containing credential-like strings (OpenAI/Anthropic, GitHub, AWS access-key IDs and secret keys, private keys, Slack tokens), then posts or updates one comment marked `<!-- detour-ai-review -->` that names the reviewed head SHA. If a run produces no review, the existing comment is marked stale.
+- **Secret scope:** `OPENAI_API_KEY` lives in the `ai-review` environment with deployment branches restricted to `main` (Adam's setting), so workflows running from PR branches can't read it.
+- **Pinning:** third-party actions in this workflow are pinned to full commit SHAs and updated by deliberate PRs.
+- **Residual risk:** anyone with write access can still add a new workflow in a PR; the environment restriction above is what keeps the key out of those runs. A public repo is assumed (the PR head is fetched without credentials).
 
 ## Consequences
 
