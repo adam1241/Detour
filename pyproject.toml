@@ -31,9 +31,9 @@ select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["agent"]
+files = ["agent", "db"]
 
 [tool.pytest.ini_options]
-testpaths = ["agent/tests"]
+testpaths = ["agent/tests", "db/tests"]
 markers = ["db: needs a PostGIS database at DATABASE_URL"]
 addopts = "-ra --strict-markers"

@@ -155,6 +155,8 @@ stops(id, name, type, geom POINT, overnight_ok BOOL, est_cost_usd, description, 
 trips(id, request_text, vehicle, plan_json, trace_json, created_at, model, prompt_version, eval_tags[])
 ```
 - Spatial indexes (GIST) on all `geom` columns, plus a GIST expression index on `(geom::geography)` (ADR-003).
+- Constraints (migration `0001_init`): `brand_segment` in economy/midscale/upscale; stop `type` in winery/farm/brewery/museum; `vehicle` in rv/car; prices `numeric(8,2)`; `source_url` must start with `https://`.
+- `source` is `sample_public` for real sample rows. `test_fixture` is allowed only for synthetic test rows, and the seed loader refuses it outside tests. Sourcing rules and price/points tiers: [`db/seed/README.md`](../db/seed/README.md).
 - The corridor search uses `ST_DWithin` against the route LineString (geography type, meters).
 - `trace_json` holds tool calls, order, latency, tokens and cost for the run (ADR-004).
 - The feedback table is dropped for v1.
@@ -183,6 +185,7 @@ Tracing: every run logs tool calls, order, latency, tokens, cost, prompt_version
 - [ADR-003](adr/003-spatial-search.md): PostGIS corridor search for v1; H3 documented as the scale path.
 - [ADR-004](adr/004-evals-merge-gate-and-tracing.md): custom pytest eval runner, merge gate with tolerance vs `main`, path-filtered eval runs, merge process without required approvals, tracing.
 - [ADR-005](adr/005-web-app-map-and-agent-invocation.md): Vercel Hobby, server-side SigV4 calls to AgentCore, streamed progress, MapLibre, plan hydration, per-IP rate limit.
+- [ADR-006](adr/006-database-migrations.md): plain numbered SQL migrations with a small tested runner (`db/migrate.py`); fix forward, no down-migrations.
 
 ---
 

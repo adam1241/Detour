@@ -23,13 +23,18 @@ on:
 
 permissions: {}
 
-concurrency:
-  group: ai-review-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-
 jobs:
   review:
-    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
+    # Description edits by bots (e.g. a review bot appending a summary) don't re-run the
+    # review: codex-action refuses actors without write access, and nothing changed.
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.action != 'edited' || github.event.sender.type != 'Bot')
+    # Job-level, so a skipped run never cancels a review in progress.
+    concurrency:
+      group: ai-review-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     environment: ai-review
     permissions:

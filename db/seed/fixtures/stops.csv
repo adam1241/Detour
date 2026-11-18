@@ -1,0 +1,3 @@
+id,name,type,lon,lat,overnight_ok,est_cost_usd,description,source,source_url
+stop_fixture_farm,Fixture Farm (test data),farm,-79.94,37.27,true,25.00,Synthetic farm for tests.,test_fixture,https://example.com/fixture/farm
+stop_fixture_winery,Fixture Winery (test data),winery,-81.67,36.22,false,0,Synthetic winery for tests.,test_fixture,https://example.com/fixture/winery
