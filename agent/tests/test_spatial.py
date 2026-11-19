@@ -12,7 +12,12 @@ from typing import Any, cast
 import psycopg
 import pytest
 
-from agent.tools.spatial import ToolInputError, find_hotels_near, find_stops_along_route
+from agent.tools.spatial import (
+    MAX_ROUTE_POINTS,
+    ToolInputError,
+    find_hotels_near,
+    find_stops_along_route,
+)
 from db.migrate import apply_migrations
 
 LON = -79.0
@@ -67,6 +72,26 @@ def db(conn: psycopg.Connection) -> psycopg.Connection:
         ({"limit": 51}, "bad_limit"),
         ({"route": {"type": "Point", "coordinates": [LON, 38.0]}}, "bad_geometry"),
         ({"route": {"type": "LineString", "coordinates": [[LON, 38.0]]}}, "bad_geometry"),
+        ({"route": [[LON, 37.5], [LON, 38.5]]}, "bad_geometry"),
+        ({"route": {"type": "LineString", "coordinates": "nope"}}, "bad_geometry"),
+        (
+            {"route": {"type": "LineString", "coordinates": [[True, False], [LON, 38.0]]}},
+            "bad_geometry",
+        ),
+        (
+            {
+                "route": {
+                    "type": "LineString",
+                    "coordinates": [[LON, 37.5 + i * 1e-5] for i in range(MAX_ROUTE_POINTS + 1)],
+                }
+            },
+            "bad_geometry",
+        ),
+        ({"types": "winery"}, "bad_type"),
+        ({"limit": 1.5}, "bad_limit"),
+        ({"limit": "5"}, "bad_limit"),
+        ({"limit": True}, "bad_limit"),
+        ({"max_detour_km": "30"}, "bad_max_detour"),
     ],
 )
 def test_find_stops_rejects_bad_input(kwargs: dict[str, Any], code: str) -> None:
@@ -83,6 +108,12 @@ def test_find_stops_rejects_bad_input(kwargs: dict[str, Any], code: str) -> None
     [
         ({"near": [LON]}, "bad_geometry"),
         ({"near": [200.0, 38.0]}, "bad_geometry"),
+        ({"near": [True, False]}, "bad_geometry"),
+        ({"near": "-79,38"}, "bad_geometry"),
+        ({"radius_km": True}, "bad_radius"),
+        ({"max_price_usd": float("nan")}, "bad_price"),
+        ({"max_price_usd": True}, "bad_price"),
+        ({"max_price_usd": "120"}, "bad_price"),
         ({"radius_km": 0}, "bad_radius"),
         ({"radius_km": 80}, "bad_radius"),
         ({"max_price_usd": Decimal("0")}, "bad_price"),
@@ -96,6 +127,29 @@ def test_find_hotels_rejects_bad_input(kwargs: dict[str, Any], code: str) -> Non
     with pytest.raises(ToolInputError) as err:
         find_hotels_near(NO_DB, **args)
     assert err.value.code == code
+
+
+class _FakeConn:
+    """Records the query parameters; returns no rows."""
+
+    def __init__(self) -> None:
+        self.params: dict[str, Any] = {}
+
+    def execute(self, _sql: str, params: dict[str, Any]) -> "_FakeConn":
+        self.params = params
+        return self
+
+    def fetchall(self) -> list[Any]:
+        return []
+
+
+@pytest.mark.parametrize("cap", [120, 120.0, Decimal("120")])
+def test_find_hotels_accepts_numeric_price_caps_as_decimal(cap: Any) -> None:
+    fake = _FakeConn()
+    assert (
+        find_hotels_near(cast(psycopg.Connection, fake), near=[LON, 38.0], max_price_usd=cap) == []
+    )
+    assert fake.params["max_price"] == Decimal("120")
 
 
 # --- find_stops_along_route (database) -------------------------------------------------------
@@ -135,6 +189,8 @@ def test_stops_type_filter_limit_and_output_shape(db: psycopg.Connection) -> Non
     assert stop["lat"] == pytest.approx(37.7)
     assert stop["est_cost_usd"] == Decimal("10.00")
     assert stop["source_url"] == "https://example.com/fixture"
+    wineries = find_stops_along_route(db, route=LINE, types=["winery"])
+    assert [s["id"] for s in wineries] == ["stop_w1", "stop_w2"]  # the brewery is filtered out
     both = find_stops_along_route(db, route=LINE, types=["winery", "brewery"])
     assert [s["id"] for s in both] == ["stop_w1", "stop_w2", "stop_b1"]
 

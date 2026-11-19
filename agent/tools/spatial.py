@@ -19,6 +19,8 @@ STOP_TYPES = ("winery", "farm", "brewery", "museum")
 MAX_DETOUR_KM = 100.0
 MAX_RADIUS_KM = 50.0
 MAX_LIMIT = 50
+# The full cached corridor is under 10k vertices per direction; anything far bigger is abuse.
+MAX_ROUTE_POINTS = 20_000
 
 Near = Sequence[float] | dict[str, Any]
 
@@ -35,27 +37,61 @@ class ToolInputError(ValueError):
         return {"error": self.code, "message": self.message}
 
 
-def _check_point(point: Sequence[float]) -> list[float]:
-    if len(point) != 2 or not all(isinstance(v, int | float) for v in point):
-        raise ToolInputError("bad_geometry", f"expected [lon, lat], got {list(point)!r}")
+def _is_number(value: object) -> bool:
+    """A real int or float (bool is an int subclass in Python, so exclude it)."""
+    return isinstance(value, int | float) and not isinstance(value, bool)
+
+
+def _check_point(point: object) -> list[float]:
+    if (
+        not isinstance(point, list | tuple)
+        or len(point) != 2
+        or not all(_is_number(v) for v in point)
+    ):
+        raise ToolInputError("bad_geometry", f"expected [lon, lat] numbers, got {point!r}")
     lon, lat = float(point[0]), float(point[1])
     if not (math.isfinite(lon) and math.isfinite(lat) and -180 <= lon <= 180 and -90 <= lat <= 90):
         raise ToolInputError("bad_geometry", f"[lon, lat] out of range: {[lon, lat]!r}")
     return [lon, lat]
 
 
-def _check_line(geometry: dict[str, Any]) -> str:
-    if geometry.get("type") != "LineString":
-        raise ToolInputError("bad_geometry", "route must be a GeoJSON LineString")
-    coords = geometry.get("coordinates") or []
-    if len(coords) < 2:
-        raise ToolInputError("bad_geometry", "route LineString needs at least 2 points")
+def _check_line(geometry: object) -> str:
+    if not isinstance(geometry, dict) or geometry.get("type") != "LineString":
+        raise ToolInputError("bad_geometry", "route must be a GeoJSON LineString object")
+    coords = geometry.get("coordinates")
+    if not isinstance(coords, list) or len(coords) < 2:
+        raise ToolInputError("bad_geometry", "route LineString needs a list of at least 2 points")
+    if len(coords) > MAX_ROUTE_POINTS:
+        raise ToolInputError(
+            "bad_geometry", f"route has {len(coords)} points; the limit is {MAX_ROUTE_POINTS}"
+        )
     return json.dumps({"type": "LineString", "coordinates": [_check_point(c) for c in coords]})
 
 
-def _check_limit(limit: int) -> None:
-    if not 1 <= limit <= MAX_LIMIT:
-        raise ToolInputError("bad_limit", f"limit must be between 1 and {MAX_LIMIT}")
+def _check_limit(limit: object) -> None:
+    if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= MAX_LIMIT:
+        raise ToolInputError("bad_limit", f"limit must be a whole number from 1 to {MAX_LIMIT}")
+
+
+def _check_range(value: object, code: str, name: str, upper: float) -> float:
+    if not _is_number(value) or not 0 < float(value) <= upper:  # type: ignore[arg-type]
+        raise ToolInputError(code, f"{name} must be a number in (0, {upper}]")
+    return float(value)  # type: ignore[arg-type]
+
+
+def _check_price(value: object) -> Decimal | None:
+    """Accept Decimal, int or float (JSON numbers); return an exact Decimal."""
+    if value is None:
+        return None
+    if isinstance(value, Decimal):
+        price = value
+    elif _is_number(value):
+        price = Decimal(str(value))
+    else:
+        raise ToolInputError("bad_price", "max_price_usd must be a number")
+    if not (price.is_finite() and price > 0):
+        raise ToolInputError("bad_price", "max_price_usd must be a positive, finite amount")
+    return price
 
 
 STOPS_SQL = """
@@ -86,10 +122,9 @@ def find_stops_along_route(
     detour_km_estimate (2x that: there and back) and position_along_route (0 = start, 1 = end).
     """
     route_json = _check_line(route)
-    if not types or any(t not in STOP_TYPES for t in types):
-        raise ToolInputError("bad_type", f"types must be a non-empty subset of {list(STOP_TYPES)}")
-    if not 0 < max_detour_km <= MAX_DETOUR_KM:
-        raise ToolInputError("bad_max_detour", f"max_detour_km must be in (0, {MAX_DETOUR_KM}]")
+    if not isinstance(types, list | tuple) or not types or any(t not in STOP_TYPES for t in types):
+        raise ToolInputError("bad_type", f"types must be a non-empty list from {list(STOP_TYPES)}")
+    max_detour_km = _check_range(max_detour_km, "bad_max_detour", "max_detour_km", MAX_DETOUR_KM)
     _check_limit(limit)
 
     rows = conn.execute(
@@ -133,7 +168,7 @@ def find_hotels_near(
     *,
     near: Near,
     radius_km: float = 10.0,
-    max_price_usd: Decimal | None = None,
+    max_price_usd: Decimal | float | None = None,
     limit: int = 20,
 ) -> list[dict[str, Any]]:
     """Hotels within radius_km of a [lon, lat] point or a route segment (GeoJSON LineString),
@@ -142,10 +177,8 @@ def find_hotels_near(
         near_json = _check_line(near)
     else:
         near_json = json.dumps({"type": "Point", "coordinates": _check_point(near)})
-    if not 0 < radius_km <= MAX_RADIUS_KM:
-        raise ToolInputError("bad_radius", f"radius_km must be in (0, {MAX_RADIUS_KM}]")
-    if max_price_usd is not None and not (max_price_usd.is_finite() and max_price_usd > 0):
-        raise ToolInputError("bad_price", "max_price_usd must be a positive, finite amount")
+    radius_km = _check_range(radius_km, "bad_radius", "radius_km", MAX_RADIUS_KM)
+    max_price_usd = _check_price(max_price_usd)
     _check_limit(limit)
 
     rows = conn.execute(
