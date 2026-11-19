@@ -1,0 +1,11 @@
+id: c04_family_short_hop
+persona: family
+request: "Family of four, DC to Luray for a 2-day weekend, under $250, kids get carsick so keep driving short."
+origin: Washington, DC
+destination: Luray, VA
+days: 2
+vehicle: car
+max_drive_minutes: 180
+budget_usd: 250
+outdoor_leaning: false
+infeasible: false

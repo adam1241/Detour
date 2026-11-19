@@ -1,0 +1,14 @@
+id: c18_replan_cheaper
+persona: rv_couple
+request: "Make it cheaper."
+replan:
+  of: c01_rv_couple_classic
+  from_day: 2
+origin: Washington, DC
+destination: Asheville, NC
+days: 4
+vehicle: rv
+max_drive_minutes: 300
+budget_usd: 600
+outdoor_leaning: true
+infeasible: false

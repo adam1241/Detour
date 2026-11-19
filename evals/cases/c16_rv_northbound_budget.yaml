@@ -1,0 +1,11 @@
+id: c16_rv_northbound_budget
+persona: rv_couple
+request: "Asheville up to Staunton over 3 days in the RV, keep lodging under $300."
+origin: Asheville, NC
+destination: Staunton, VA
+days: 3
+vehicle: rv
+max_drive_minutes: 300
+budget_usd: 300
+outdoor_leaning: true
+infeasible: false

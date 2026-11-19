@@ -1,0 +1,12 @@
+id: c08_one_day
+persona: weekend_explorer
+request: "Can I do DC to Asheville in a single day?"
+origin: Washington, DC
+destination: Asheville, NC
+days: 1
+vehicle: car
+max_drive_minutes: 300
+budget_usd: null
+outdoor_leaning: false
+# ~10.6 h of driving in one day breaks the 5 h limit.
+infeasible: true

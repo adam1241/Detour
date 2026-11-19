@@ -1,0 +1,12 @@
+id: c03_rv_no_hotels
+persona: rv_couple
+request: "DC to Asheville in 4 days in the RV, and we don't want any hotels at all, only farm or winery overnights."
+origin: Washington, DC
+destination: Asheville, NC
+days: 4
+vehicle: rv
+max_drive_minutes: 300
+budget_usd: null
+outdoor_leaning: true
+# There is no RV host on the Roanoke stretch, so a hosts-only plan can't keep days under 5h.
+infeasible: true

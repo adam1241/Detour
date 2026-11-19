@@ -1,0 +1,11 @@
+id: c06_weekend_winery
+persona: weekend_explorer
+request: "Quick 2-day escape from DC to Luray by car with a winery stop, under $200."
+origin: Washington, DC
+destination: Luray, VA
+days: 2
+vehicle: car
+max_drive_minutes: 300
+budget_usd: 200
+outdoor_leaning: true
+infeasible: false

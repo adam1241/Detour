@@ -1,0 +1,12 @@
+id: c09_impossible_budget
+persona: family
+request: "DC to Asheville, 4 days, hotels every night, total budget $100."
+origin: Washington, DC
+destination: Asheville, NC
+days: 4
+vehicle: car
+max_drive_minutes: 300
+budget_usd: 100
+outdoor_leaning: false
+# Three hotel nights cost at least ~$200 in the sample data.
+infeasible: true
