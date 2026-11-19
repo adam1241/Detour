@@ -12,7 +12,7 @@ from typing import Any
 import pytest
 
 from agent.tools.get_route import get_route
-from evals.cases import EvalCase, load_cases
+from evals.cases import EvalCase, Replan, load_cases
 from evals.catalog import seed_catalog
 from evals.checks import GATED, check_case, score
 from evals.runner import PlannerOutput, run, write_results
@@ -295,3 +295,69 @@ def test_hotel_conversion_counts_outdoor_trips_with_a_hotel_night() -> None:
 
 def test_budget_is_decimal() -> None:
     assert CASES["c01_rv_couple_classic"].budget_usd == Decimal("600")
+
+
+# --- review follow-ups -------------------------------------------------------------------------
+
+
+def test_plan_vehicle_must_match_the_request() -> None:
+    plan = luray_weekend_plan()
+    plan["vehicle"] = "rv"
+    result = check_case(CASES["c04_family_short_hop"], PlannerOutput(plan=plan), CATALOG)
+    assert result.checks["vehicle"] is False
+
+
+def test_missing_overnights_fail_the_structure() -> None:
+    plan = luray_weekend_plan()
+    plan["days"][0]["overnight"] = None
+    plan["totals"] = {"cash_usd": 0, "points": 0, "hotel_nights": 0, "host_nights": 0}
+    result = check_case(CASES["c04_family_short_hop"], PlannerOutput(plan=plan), CATALOG)
+    assert result.checks["schema"] is False
+    assert result.checks["max_drive"] is False
+
+
+@pytest.mark.parametrize(
+    "change",
+    [{"origin": "Front Royal, VA"}, {"destination": "Staunton, VA"}, {"days": 3}],
+)
+def test_plan_must_answer_the_requested_trip(change: dict[str, Any]) -> None:
+    case = replace(CASES["c04_family_short_hop"], **change)
+    result = check_case(case, PlannerOutput(plan=luray_weekend_plan()), CATALOG)
+    assert result.checks["schema"] is False
+    assert any(v["code"] == "request_mismatch" for v in result.violations)
+
+
+def test_endpoint_aliases_match_the_request() -> None:
+    plan = luray_weekend_plan()
+    plan["origin"], plan["destination"] = "Washington, D.C.", "luray va"
+    result = check_case(CASES["c04_family_short_hop"], PlannerOutput(plan=plan), CATALOG)
+    assert result.checks["schema"] is True
+
+
+def test_vague_request_accepts_any_endpoints_and_length() -> None:
+    result = check_case(CASES["c10_vague"], PlannerOutput(plan=luray_weekend_plan()), CATALOG)
+    assert result.checks["schema"] is True
+
+
+def test_planner_cannot_rewrite_the_plan_it_replans() -> None:
+    base_case = CASES["c04_family_short_hop"]
+    replan_case = replace(base_case, id="c99_replan", replan=Replan(of=base_case.id, from_day=2))
+
+    def sneaky(case: EvalCase, previous: dict[str, Any] | None) -> PlannerOutput:
+        if previous is None:
+            return PlannerOutput(plan=luray_weekend_plan())
+        previous["days"][0]["narrative"] = "Rewritten day one. Sneaky."
+        return PlannerOutput(plan=previous)
+
+    results = run(sneaky, CATALOG, [base_case, replan_case])
+    assert results[1].checks["replan_earlier_days"] is False
+
+
+def test_first_progress_and_full_plan_latency_are_tracked_separately() -> None:
+    def timed(case: EvalCase, previous: dict[str, Any] | None) -> PlannerOutput:
+        return PlannerOutput(plan=luray_weekend_plan(), latency_s=30.0, first_progress_s=2.0)
+
+    results = run(timed, CATALOG, [CASES["c04_family_short_hop"]])
+    tracked = score([r.checks for r in results], tracked=results)["tracked"]
+    assert tracked["first_progress_p50_s"] == 2.0
+    assert tracked["latency_p50_s"] == 30.0

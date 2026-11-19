@@ -12,6 +12,7 @@ fails.
 from __future__ import annotations
 
 import argparse
+import copy
 import importlib
 import json
 import os
@@ -34,7 +35,8 @@ RESULTS_DIR = Path(__file__).resolve().parent / "results"
 class PlannerOutput:
     plan: Any
     allowed_ids: set[str] | None = None  # place IDs the tools returned in this run
-    latency_s: float | None = None
+    latency_s: float | None = None  # full plan
+    first_progress_s: float | None = None  # first progress event (spec §8.2: < 3 s)
     cost_usd: float | None = None
     error: str | None = None
 
@@ -52,7 +54,9 @@ def run(
         previous = plans.get(case.replan.of) if case.replan else None
         started = time.perf_counter()
         try:
-            output = planner(case, previous)
+            # A copy: a planner that edits the plan it replans must not change the reference
+            # the replan check compares against.
+            output = planner(case, copy.deepcopy(previous))
         except Exception as err:
             output = PlannerOutput(plan=None, error=f"{type(err).__name__}: {err}")
         if output.latency_s is None:
@@ -90,6 +94,8 @@ def _markdown(summary: dict[str, Any], sha: str) -> str:
         lines += [
             "",
             f"Tracked (not gated): hotel conversion {fmt(t.get('hotel_conversion'), '.0%')}, "
+            f"first progress p50 {fmt(t.get('first_progress_p50_s'), '.1f')} s / p95 "
+            f"{fmt(t.get('first_progress_p95_s'), '.1f')} s, "
             f"latency p50 {fmt(t.get('latency_p50_s'), '.1f')} s / p95 "
             f"{fmt(t.get('latency_p95_s'), '.1f')} s, "
             f"mean cost {cost}",
@@ -111,6 +117,7 @@ def write_results(
                 "violations": r.violations,
                 "error": r.error,
                 "latency_s": r.latency_s,
+                "first_progress_s": r.first_progress_s,
                 "cost_usd": r.cost_usd,
             }
             for r in results

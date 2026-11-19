@@ -144,6 +144,12 @@ def _resolve_town(place: str) -> str:
     return town
 
 
+def canonical_town(name: str) -> str | None:
+    """The corridor town a name refers to ("DC", "Washington, D.C." -> "Washington, DC"),
+    or None if it isn't one."""
+    return _corridor().aliases.get(_normalize(name))
+
+
 def _vertex(track: _Track, place: Place) -> int:
     """Index of the route vertex for a town name or an on-corridor [lon, lat] point."""
     if isinstance(place, str):

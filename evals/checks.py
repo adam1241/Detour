@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any
 
 from agent.plan.catalog import Catalog
 from agent.plan.validate import Violation, validate_plan
+from agent.tools.get_route import canonical_town
 from evals.cases import EvalCase
 
 if TYPE_CHECKING:
@@ -28,6 +29,8 @@ GATED: dict[str, float] = {
     "vehicle": 0.95,
     "replan_earlier_days": 0.95,
 }
+# Day/overnight structure: a plan with these can't be checked for drive time or route order.
+STRUCTURE_CODES = {"day_numbers", "overnight_missing", "last_day_overnight"}
 # IDs that don't exist or weren't returned by a tool, and numbers that don't match the tools.
 GROUNDING_CODES = {
     "unknown_id",
@@ -48,6 +51,7 @@ class CaseResult:
     error: str | None = None
     plan: Any = None
     latency_s: float | None = None
+    first_progress_s: float | None = None
     cost_usd: float | None = None
     outdoor_leaning: bool = False
     hotel_nights: int = 0
@@ -56,6 +60,22 @@ class CaseResult:
 def _constraint(violations: list[Violation], code: str, case: EvalCase) -> bool:
     found = [v for v in violations if v.code == code]
     return not found or (case.infeasible and all(v.acknowledged for v in found))
+
+
+def _request_mismatches(case: EvalCase, plan: dict[str, Any]) -> list[str]:
+    """Where the plan doesn't answer the trip that was asked for (when the case specifies it)."""
+    problems = []
+    if canonical_town(plan["origin"]) != canonical_town(case.origin):
+        problems.append(f"origin is {plan['origin']!r}, the request starts at {case.origin!r}")
+    if case.destination is not None and canonical_town(plan["destination"]) != canonical_town(
+        case.destination
+    ):
+        problems.append(
+            f"destination is {plan['destination']!r}, the request ends at {case.destination!r}"
+        )
+    if case.days is not None and len(plan["days"]) != case.days:
+        problems.append(f"{len(plan['days'])} days, the request asks for {case.days}")
+    return problems
 
 
 def check_case(
@@ -83,6 +103,7 @@ def check_case(
         error=output.error,
         plan=output.plan,
         latency_s=output.latency_s,
+        first_progress_s=output.first_progress_s,
         cost_usd=output.cost_usd,
         outdoor_leaning=case.outdoor_leaning,
     )
@@ -102,6 +123,15 @@ def check_case(
     codes = {v.code for v in violations}
     if "schema" in codes:
         return result
+    # The "schema" gate also covers the plan's structure and whether it answers the request:
+    # a plan for the wrong trip, or with missing overnights, can't pass the dependent checks.
+    mismatches = _request_mismatches(case, output.plan)
+    result.violations += [
+        {"code": "request_mismatch", "message": m, "day": None, "acknowledged": False}
+        for m in mismatches
+    ]
+    if mismatches or codes & STRUCTURE_CODES:
+        return result
 
     result.hotel_nights = int(output.plan["totals"]["hotel_nights"])
     checks: dict[str, bool | None] = {
@@ -110,7 +140,7 @@ def check_case(
         "max_drive": _constraint(violations, "max_drive", case),
         "budget": _constraint(violations, "budget", case),
         "route_order": not (codes & {"backtracking", "route_error"}),
-        "vehicle": "vehicle_rule" not in codes,
+        "vehicle": "vehicle_rule" not in codes and output.plan["vehicle"] == case.vehicle,
         "replan_earlier_days": (
             "replan_changed_earlier_day" not in codes and previous_plan is not None
         ),
@@ -167,11 +197,14 @@ def score(
     if tracked is not None:
         outdoor = [r for r in tracked if r.outdoor_leaning]
         latencies = [r.latency_s for r in tracked if r.latency_s is not None]
+        first_progress = [r.first_progress_s for r in tracked if r.first_progress_s is not None]
         costs = [r.cost_usd for r in tracked if r.cost_usd is not None]
         summary["tracked"] = {
             "hotel_conversion": (
                 sum(1 for r in outdoor if r.hotel_nights >= 1) / len(outdoor) if outdoor else None
             ),
+            "first_progress_p50_s": _percentile(first_progress, 50),
+            "first_progress_p95_s": _percentile(first_progress, 95),
             "latency_p50_s": _percentile(latencies, 50),
             "latency_p95_s": _percentile(latencies, 95),
             "mean_cost_usd": statistics.fmean(costs) if costs else None,
