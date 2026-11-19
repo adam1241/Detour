@@ -23,11 +23,14 @@ def schema(db_url: str) -> Iterator[str]:
     name = f"detour_test_{uuid.uuid4().hex[:12]}"
     with psycopg.connect(db_url, autocommit=True) as admin:
         admin.execute("CREATE EXTENSION IF NOT EXISTS postgis SCHEMA public")
-        admin.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(name)))
+        # Identifier quoting via psycopg's sql module; no string formatting of SQL.
+        create = sql.Composed([sql.SQL("CREATE SCHEMA "), sql.Identifier(name)])
+        drop = sql.Composed([sql.SQL("DROP SCHEMA "), sql.Identifier(name), sql.SQL(" CASCADE")])
+        admin.execute(create)
         try:
             yield name
         finally:
-            admin.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(name)))
+            admin.execute(drop)
 
 
 @pytest.fixture
