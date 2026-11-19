@@ -203,25 +203,27 @@ def test_stops_type_filter_limit_and_output_shape(db: psycopg.Connection) -> Non
 
 
 @pytest.mark.db
-def test_detour_cutoff_is_exact_and_inclusive(db: psycopg.Connection) -> None:
-    """Uses PostGIS's own WGS84 distance, so the boundary is tested exactly, not with a margin."""
+def test_detour_cutoff_to_the_millimetre(db: psycopg.Connection) -> None:
+    """Uses PostGIS's own WGS84 distance to the stop, so the cutoff is tested to 1 mm, not with
+    a km-sized margin. (Exact equality isn't testable: the km <-> m conversion and the
+    geography computation each round in the last float bits.)"""
     add_stop(db, "stop_on_route", "farm", LON, 38.2)
     add_stop(db, "stop_edge", "farm", east(30, 38.0), 38.0)
     row = db.execute(
-        "SELECT ST_Distance(geom::geography, ST_GeomFromText(%s, 4326)::geography) / 1000 "
+        "SELECT ST_Distance(geom::geography, ST_GeomFromText(%s, 4326)::geography) "
         "FROM stops WHERE id = 'stop_edge'",
         (f"LINESTRING({LON} 37.5, {LON} 38.5)",),
     ).fetchone()
     assert row is not None
-    edge_km = float(row[0])
+    edge_m = float(row[0])
 
-    at_limit = find_stops_along_route(db, route=LINE, types=["farm"], max_detour_km=edge_km)
+    one_mm_over = (edge_m + 0.001) / 1000
+    at_limit = find_stops_along_route(db, route=LINE, types=["farm"], max_detour_km=one_mm_over)
     assert [s["id"] for s in at_limit] == ["stop_edge", "stop_on_route"]
     assert at_limit[1]["distance_from_route_km"] == pytest.approx(0, abs=0.01)
 
-    just_under = find_stops_along_route(
-        db, route=LINE, types=["farm"], max_detour_km=edge_km - 0.001
-    )
+    one_m_under = (edge_m - 1) / 1000
+    just_under = find_stops_along_route(db, route=LINE, types=["farm"], max_detour_km=one_m_under)
     assert [s["id"] for s in just_under] == ["stop_on_route"]
 
 

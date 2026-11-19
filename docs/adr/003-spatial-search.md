@@ -54,7 +54,7 @@ LIMIT $4;
 
 Tests (written first, run against the PostGIS service container):
 - Point exactly on the line → distance ≈ 0, included.
-- Points at known offsets (28 km in, 32 km out with `max_detour_km=30`) → in/out correctly. *(Implemented 2026-11-18, plus an exact boundary test: the cutoff is set to PostGIS's own WGS84 distance to a stop, which must be included, and 1 m less, which must exclude it. An on-route stop returns distance ≈ 0.)*
+- Points at known offsets (28 km in, 32 km out with `max_detour_km=30`) → in/out correctly. *(Implemented 2026-11-18, plus a boundary test to the millimetre: a cutoff 1 mm above PostGIS's own WGS84 distance to a stop must include it, and 1 m below must exclude it (exact equality is not testable in floating point). An on-route stop returns distance ≈ 0.)*
 - Positions are monotonic for points placed in order along the line.
 - Type filter and `limit` respected; empty result is `[]`, not an error.
 - `EXPLAIN` test that the expression index is used. *(Implemented 2026-11-18 with `SET enable_seqscan = off`, which makes the check deterministic on a tiny test table: both queries must show `stops_geog_gix` / `hotels_geog_gix`. With real data volumes the planner decides on cost.)*
