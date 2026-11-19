@@ -8,7 +8,6 @@ Bad input raises ToolInputError (a stable code the agent can act on) before any 
 from __future__ import annotations
 
 import json
-import math
 from collections.abc import Sequence
 from decimal import Decimal
 from typing import Any
@@ -49,10 +48,12 @@ def _check_point(point: object) -> list[float]:
         or not all(_is_number(v) for v in point)
     ):
         raise ToolInputError("bad_geometry", f"expected [lon, lat] numbers, got {point!r}")
-    lon, lat = float(point[0]), float(point[1])
-    if not (math.isfinite(lon) and math.isfinite(lat) and -180 <= lon <= 180 and -90 <= lat <= 90):
-        raise ToolInputError("bad_geometry", f"[lon, lat] out of range: {[lon, lat]!r}")
-    return [lon, lat]
+    lon, lat = point
+    # Compare the original values: float() of a huge int raises OverflowError, and NaN/inf
+    # fail these comparisons anyway.
+    if not (-180 <= lon <= 180 and -90 <= lat <= 90):
+        raise ToolInputError("bad_geometry", f"[lon, lat] out of range: {point!r}"[:200])
+    return [float(lon), float(lat)]
 
 
 def _check_line(geometry: object) -> str:
@@ -74,7 +75,8 @@ def _check_limit(limit: object) -> None:
 
 
 def _check_range(value: object, code: str, name: str, upper: float) -> float:
-    if not _is_number(value) or not 0 < float(value) <= upper:  # type: ignore[arg-type]
+    # Compare before converting: float() of a huge int raises OverflowError.
+    if not _is_number(value) or not 0 < value <= upper:  # type: ignore[operator]
         raise ToolInputError(code, f"{name} must be a number in (0, {upper}]")
     return float(value)  # type: ignore[arg-type]
 
@@ -144,7 +146,8 @@ def find_stops_along_route(
             "source_url": r[8],
             "distance_from_route_km": round(r[9], 2),
             "detour_km_estimate": round(2 * r[9], 1),
-            "position_along_route": round(r[10], 4),
+            # Not rounded: validate_plan compares positions to detect backtracking.
+            "position_along_route": r[10],
         }
         for r in rows
     ]

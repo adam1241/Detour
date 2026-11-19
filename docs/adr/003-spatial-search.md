@@ -54,10 +54,11 @@ LIMIT $4;
 
 Tests (written first, run against the PostGIS service container):
 - Point exactly on the line → distance ≈ 0, included.
-- Points at known offsets (28 km in, 32 km out with `max_detour_km=30`) → in/out correctly. *(Implemented with a ±2 km margin rather than ±0.1 km: test points are placed with a spherical formula while PostGIS measures on the WGS84 spheroid, so a 100 m margin would test rounding, not the query.)*
+- Points at known offsets (28 km in, 32 km out with `max_detour_km=30`) → in/out correctly. *(Implemented 2026-11-18, plus an exact boundary test: the cutoff is set to PostGIS's own WGS84 distance to a stop, which must be included, and 1 m less, which must exclude it. An on-route stop returns distance ≈ 0.)*
 - Positions are monotonic for points placed in order along the line.
 - Type filter and `limit` respected; empty result is `[]`, not an error.
-- `EXPLAIN` test (or manual check documented in PR) that the expression index is used. *(Deferred: with a handful of test rows Postgres prefers a sequential scan, so an `EXPLAIN` assertion would be flaky. Revisit with the full seed set.)*
+- `EXPLAIN` test that the expression index is used. *(Implemented 2026-11-18 with `SET enable_seqscan = off`, which makes the check deterministic on a tiny test table: both queries must show `stops_geog_gix` / `hotels_geog_gix`. With real data volumes the planner decides on cost.)*
+- `position_along_route` is returned unrounded, because `validate_plan` compares positions to detect backtracking.
 
 ## Consequences
 

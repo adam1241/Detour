@@ -92,6 +92,11 @@ def db(conn: psycopg.Connection) -> psycopg.Connection:
         ({"limit": "5"}, "bad_limit"),
         ({"limit": True}, "bad_limit"),
         ({"max_detour_km": "30"}, "bad_max_detour"),
+        ({"max_detour_km": 10**400}, "bad_max_detour"),
+        (
+            {"route": {"type": "LineString", "coordinates": [[10**400, 38.0], [LON, 38.5]]}},
+            "bad_geometry",
+        ),
     ],
 )
 def test_find_stops_rejects_bad_input(kwargs: dict[str, Any], code: str) -> None:
@@ -111,6 +116,8 @@ def test_find_stops_rejects_bad_input(kwargs: dict[str, Any], code: str) -> None
         ({"near": [True, False]}, "bad_geometry"),
         ({"near": "-79,38"}, "bad_geometry"),
         ({"radius_km": True}, "bad_radius"),
+        ({"radius_km": 10**400}, "bad_radius"),
+        ({"near": [LON, -(10**400)]}, "bad_geometry"),
         ({"max_price_usd": float("nan")}, "bad_price"),
         ({"max_price_usd": True}, "bad_price"),
         ({"max_price_usd": "120"}, "bad_price"),
@@ -193,6 +200,62 @@ def test_stops_type_filter_limit_and_output_shape(db: psycopg.Connection) -> Non
     assert [s["id"] for s in wineries] == ["stop_w1", "stop_w2"]  # the brewery is filtered out
     both = find_stops_along_route(db, route=LINE, types=["winery", "brewery"])
     assert [s["id"] for s in both] == ["stop_w1", "stop_w2", "stop_b1"]
+
+
+@pytest.mark.db
+def test_detour_cutoff_is_exact_and_inclusive(db: psycopg.Connection) -> None:
+    """Uses PostGIS's own WGS84 distance, so the boundary is tested exactly, not with a margin."""
+    add_stop(db, "stop_on_route", "farm", LON, 38.2)
+    add_stop(db, "stop_edge", "farm", east(30, 38.0), 38.0)
+    row = db.execute(
+        "SELECT ST_Distance(geom::geography, ST_GeomFromText(%s, 4326)::geography) / 1000 "
+        "FROM stops WHERE id = 'stop_edge'",
+        (f"LINESTRING({LON} 37.5, {LON} 38.5)",),
+    ).fetchone()
+    assert row is not None
+    edge_km = float(row[0])
+
+    at_limit = find_stops_along_route(db, route=LINE, types=["farm"], max_detour_km=edge_km)
+    assert [s["id"] for s in at_limit] == ["stop_edge", "stop_on_route"]
+    assert at_limit[1]["distance_from_route_km"] == pytest.approx(0, abs=0.01)
+
+    just_under = find_stops_along_route(
+        db, route=LINE, types=["farm"], max_detour_km=edge_km - 0.001
+    )
+    assert [s["id"] for s in just_under] == ["stop_on_route"]
+
+
+@pytest.mark.db
+def test_position_is_not_rounded(db: psycopg.Connection) -> None:
+    """validate_plan compares positions to catch backtracking; rounding could hide it."""
+    add_stop(db, "stop_p1", "farm", east(1, 38.00001), 38.00001)
+    add_stop(db, "stop_p2", "farm", east(1, 38.00004), 38.00004)
+    p1, p2 = (
+        s["position_along_route"] for s in find_stops_along_route(db, route=LINE, types=["farm"])
+    )
+    assert p1 < p2
+
+
+@pytest.mark.db
+@pytest.mark.parametrize(
+    ("query", "index"),
+    [("stops", "stops_geog_gix"), ("hotels", "hotels_geog_gix")],
+)
+def test_queries_can_use_the_geography_index(
+    db: psycopg.Connection, query: str, index: str
+) -> None:
+    """With sequential scans discouraged, the planner must pick the geography expression index."""
+    from agent.tools.spatial import HOTELS_SQL, STOPS_SQL
+
+    route = '{"type": "LineString", "coordinates": [[-79.0, 37.5], [-79.0, 38.5]]}'
+    db.execute("SET enable_seqscan = off")
+    if query == "stops":
+        params: dict[str, Any] = {"route": route, "max_m": 30000, "types": ["farm"], "limit": 5}
+        plan = db.execute("EXPLAIN " + STOPS_SQL, params).fetchall()
+    else:
+        params = {"near": route, "radius_m": 10000, "max_price": None, "limit": 5}
+        plan = db.execute("EXPLAIN " + HOTELS_SQL, params).fetchall()
+    assert index in " ".join(row[0] for row in plan)
 
 
 @pytest.mark.db
