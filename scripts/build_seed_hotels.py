@@ -54,8 +54,9 @@ def _search(query: str) -> list[dict[str, Any]]:
     return results
 
 
-def geocode(name: str, address: str) -> dict[str, Any]:
-    """Prefer an exact hotel match (OSM tourism feature) by name + town; else the address.
+def geocode(name: str, address: str, accept: tuple[str, ...] = ("tourism",)) -> dict[str, Any]:
+    """Prefer an exact place match (OSM feature in `accept` categories) by name + town; else
+    the address.
 
     The match type is recorded so a reviewer can see which rows are only street-level.
     """
@@ -67,13 +68,21 @@ def geocode(name: str, address: str) -> dict[str, Any]:
     fallback: dict[str, Any] | None = None
     for query in queries:
         for r in _search(query):
-            if r.get("category") == "tourism":
-                return _result(r, "hotel")
+            if r.get("category") in accept:
+                return _result(r, "place")
             if fallback is None and query == address:
                 fallback = r
-    if fallback is None:
-        raise SystemExit(f"no geocoding result for {name!r} / {address!r}")
-    return _result(fallback, "address")
+    if fallback is not None:
+        return _result(fallback, "address")
+    # Last resort: the street without its house number (recorded as a coarse "street" match).
+    street_only = address.split(" ", 1)[1] if address[:1].isdigit() else address
+    for r in _search(street_only):
+        return _result(r, "street")
+    # Final fallback: the town itself (coarse, a few km). Flagged as "town" for review.
+    town_only = address.split(",", 1)[1].strip()
+    for r in _search(town_only.rsplit(" ", 1)[0] if town_only[-5:].isdigit() else town_only):
+        return _result(r, "town")
+    raise SystemExit(f"no geocoding result for {name!r} / {address!r}")
 
 
 def _result(r: dict[str, Any], match: str) -> dict[str, Any]:

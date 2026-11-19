@@ -1,0 +1,162 @@
+{
+  "stop_chateau_obrien": {
+    "lon": -78.001941,
+    "lat": 38.904,
+    "display_name": "Markham, Fauquier County, Virginia, 22643, United States",
+    "osm": "node/158331020",
+    "match": "override",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Markham%2C+Fauquier+County%2C+Virginia&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_linden_vineyards": {
+    "lon": -78.075553,
+    "lat": 38.909,
+    "display_name": "Linden, Fauquier County, Virginia, 22642, United States",
+    "osm": "node/158531045",
+    "match": "town",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Linden%2C+VA&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_virginia_beer_museum": {
+    "lon": -78.190721,
+    "lat": 38.918239,
+    "display_name": "Virginia Beer Museum, 16, Chester Street, Front Royal, Warren County, Virginia, 22630, United States",
+    "osm": "way/590798269",
+    "match": "place",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Virginia+Beer+Museum%2C+Front+Royal%2C+VA+22630&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_car_carriage_caravan_museum": {
+    "lon": -78.483562,
+    "lat": 38.663277,
+    "display_name": "Luray Caverns, 101, Cave Hill Road, Luray Landing, Luray, Page County, Virginia, 22835, United States",
+    "osm": "node/8993636471",
+    "match": "override",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Luray+Caverns%2C+Luray%2C+Virginia&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_frontier_culture_museum": {
+    "lon": -79.045225,
+    "lat": 38.127549,
+    "display_name": "American Frontier Culture Museum, Red Oak Drive, Staunton, Virginia, 24402, United States",
+    "osm": "way/837928813",
+    "match": "place",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Frontier+Culture+Museum%2C+Staunton%2C+VA+24401&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_woodrow_wilson_library": {
+    "lon": -79.068826,
+    "lat": 38.150633,
+    "display_name": "Woodrow Wilson Presidential Library & Museum, North Coalter Street, Staunton, Virginia, 24401, United States",
+    "osm": "way/1059988087",
+    "match": "place",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Woodrow+Wilson+Presidential+Library+%26+Museum%2C+Staunton%2C+VA+24401&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_polyface_farm": {
+    "lon": -79.227395,
+    "lat": 38.118454,
+    "display_name": "43, Pure Meadows Lane, Polyface Farm, Augusta County, Virginia, 24479, United States",
+    "osm": "way/1105734776",
+    "match": "place",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=43+Pure+Meadows+Ln%2C+Swoope%2C+VA+24479&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_barren_ridge_vineyards": {
+    "lon": -78.956026,
+    "lat": 38.133607,
+    "display_name": "Barren Ridge Winery, 984, Barrenridge Road, Fishersville, Augusta County, Virginia, 22939, United States",
+    "osm": "way/286466670",
+    "match": "place",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Barren+Ridge%2C+Fishersville%2C+VA+22939&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_virginia_museum_of_transportation": {
+    "lon": -79.946824,
+    "lat": 37.273154,
+    "display_name": "Virginia Museum of Transportation, 303, Norfolk Avenue Southwest, West End, Roanoke, Virginia, 24016, United States",
+    "osm": "way/106781743",
+    "match": "place",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Virginia+Museum+of+Transportation%2C+Roanoke%2C+VA+24016&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_taubman_museum": {
+    "lon": -79.938307,
+    "lat": 37.27278,
+    "display_name": "Taubman Museum of Art, 110, Salem Avenue Southeast, Roanoke, Virginia, 24011, United States",
+    "osm": "way/106781754",
+    "match": "place",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Taubman+Museum+of+Art%2C+Roanoke%2C+VA&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_hickory_ridge_museum": {
+    "lon": -81.669688,
+    "lat": 36.208387,
+    "display_name": "Hickory Ridge Living History Museum, 591, Horn in the West Drive, Horn in the West, Boone, Watauga County, North Carolina, 28607, United States",
+    "osm": "node/2404339504",
+    "match": "place",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Hickory+Ridge%2C+Boone%2C+NC+28607&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_blowing_rock_museum": {
+    "lon": -81.679306,
+    "lat": 36.130284,
+    "display_name": "Blowing Rock Art & History Museum, 159, Ginny Stevens Lane, Laurel Park, Blowing Rock, Watauga County, North Carolina, 28605, United States",
+    "osm": "way/694835734",
+    "match": "place",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Blowing+Rock+Art+%26+History+Museum%2C+Blowing+Rock%2C+NC+28605&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_thomas_wolfe_memorial": {
+    "lon": -82.551221,
+    "lat": 35.597551,
+    "display_name": "Thomas Wolfe Memorial Visitors' Center, 48, North Market Street, Asheville, Buncombe County, North Carolina, 28801, United States",
+    "osm": "way/490448522",
+    "match": "place",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Thomas+Wolfe+Memorial%2C+Asheville%2C+NC+28801&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_asheville_art_museum": {
+    "lon": -82.55089,
+    "lat": 35.594551,
+    "display_name": "Asheville Art Museum, 2, South Pack Square, Asheville, Buncombe County, North Carolina, 28801, United States",
+    "osm": "way/379472904",
+    "match": "place",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Asheville+Art+Museum%2C+Asheville%2C+NC+28801&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_hickory_nut_gap_farm": {
+    "lon": -82.36442,
+    "lat": 35.498739,
+    "display_name": "Hickory Nut Gap Farm, 57, Sugar Hollow Road, Buncombe County, North Carolina, 28730, United States",
+    "osm": "way/357956941",
+    "match": "place",
+    "geocode_url": "https://nominatim.openstreetmap.org/search?q=Hickory+Nut+Gap+Farm%2C+Fairview%2C+NC+28730&format=jsonv2&limit=3&countrycodes=us"
+  },
+  "stop_south_river_farm": {
+    "lon": -78.244712,
+    "lat": 38.915608,
+    "display_name": "Front Royal, VA",
+    "osm": null,
+    "match": "listing",
+    "geocode_url": "https://www.hipcamp.com/en-US/land/virginia-south-river-farm-campground-pw1hrwoe"
+  },
+  "stop_blue_quartz_winery": {
+    "lon": -78.282802,
+    "lat": 38.492325,
+    "display_name": "Etlan, VA",
+    "osm": null,
+    "match": "listing",
+    "geocode_url": "https://www.hipcamp.com/en-US/land/virginia-blue-quartz-winery-brewery-zwjh789x"
+  },
+  "stop_dices_spring_farm": {
+    "lon": -78.927666,
+    "lat": 38.295533,
+    "display_name": "Weyers Cave, VA",
+    "osm": null,
+    "match": "listing",
+    "geocode_url": "https://www.hipcamp.com/en-US/land/virginia-dices-spring-farm-camp-views-7rvhpq9w"
+  },
+  "stop_shipley_farms": {
+    "lon": -81.761045,
+    "lat": 36.245894,
+    "display_name": "Vilas, NC",
+    "osm": null,
+    "match": "listing",
+    "geocode_url": "https://www.hipcamp.com/en-US/land/north-carolina-campsites-at-shipley-farms-nelhrwmd"
+  },
+  "stop_far_flung_farm": {
+    "lon": -82.8301,
+    "lat": 35.5881,
+    "display_name": "Canton, NC",
+    "osm": null,
+    "match": "listing",
+    "geocode_url": "https://www.hipcamp.com/en-US/land/north-carolina-far-flung-farm-388lh5r7"
+  }
+}

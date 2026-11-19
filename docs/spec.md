@@ -146,6 +146,7 @@ The agent must call `validate_plan` before returning a plan, and fix any violati
 - The corridor route is fetched once with `get_route` (with the waypoints above) and cached as `db/seed/corridor_route.geojson`. No routing table.
 - Sample data target: **Day 1: 15 hotels + 15 stops**; expand toward ~25 + ~25 on Day 2 if time allows.
 - Sourcing rule: a row is drafted only from a page that was actually fetched, and every row has a `source_url`. Adam reviews every row before merge. No invented rows.
+- RV overnight hosts (`overnight_ok = true`): the host's own website, **or its own Hipcamp listing**, must advertise RV stays and a nightly price (approved by Adam, 2026-11-18). Harvest Hosts listings are never used, and no stop is described as a Harvest Hosts member.
 - All rows tagged `source = 'sample_public'`.
 
 ### 6.2 Data model (PostGIS)
