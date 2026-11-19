@@ -136,6 +136,14 @@ A planner that naturally inserts hotel nights where they make sense (long drive 
 
 The agent must call `validate_plan` before returning a plan, and fix any violations it finds.
 
+Implementation (PR "plan validation", 2026-11-19):
+- Schema: [`packages/schema/plan.schema.json`](../packages/schema/plan.schema.json) (JSON Schema 2020-12).
+- `calculate_trip_cost` (`agent/plan/cost.py`): lodging cash (hotel price or host fee), points for hotel nights only, per-night breakdown; money as `Decimal`.
+- `validate_plan` (`agent/plan/validate.py`) returns violations with a stable `code`: `schema`, `day_numbers`, `overnight_missing`, `last_day_overnight`, `unknown_id`, `kind_mismatch`, `type_mismatch`, `not_overnight_host`, `vehicle_rule`, `route_error`, `drive_mismatch`, `distance_mismatch`, `max_drive`, `backtracking`, `budget`, `totals_mismatch`, `replan_changed_earlier_day`.
+- Drive time and distance per day are recomputed with `get_route` between the previous overnight and the next (tolerance: 5 min or 5%, 2 km or 5%), so they can't be invented. Stop detours are not added to a day's drive time in v1.
+- Route order: each stop and overnight's distance along the route from the origin must not go down (1 km tolerance).
+- `max_drive` and `budget` are marked `acknowledged` (not blocking) only when the plan has at least one warning and one alternative.
+
 ---
 
 ## 6. Data

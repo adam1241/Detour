@@ -18,7 +18,7 @@ import math
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass
-from functools import cache
+from functools import cache, lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -151,15 +151,25 @@ def _vertex(track: _Track, place: Place) -> int:
         return track.boundaries[track.towns.index(town)]
     if len(place) != 2:
         raise _error("bad_place", f"expected [lon, lat], got {list(place)!r}")
-    distances = [_haversine_km(place, c) for c in track.coords]
-    best = min(range(len(distances)), key=distances.__getitem__)
-    if distances[best] > SNAP_KM:
+    direction = "south" if track is _corridor().south else "north"
+    best, distance = _nearest(direction, float(place[0]), float(place[1]))
+    if distance > SNAP_KM:
         raise _error(
             "outside_coverage",
-            f"point {list(place)!r} is {distances[best]:.0f} km from the route, outside v1 "
+            f"point {list(place)!r} is {distance:.0f} km from the route, outside v1 "
             f"coverage (max {SNAP_KM:.0f} km).",
         )
     return best
+
+
+@lru_cache(maxsize=4096)
+def _nearest(direction: str, lon: float, lat: float) -> tuple[int, float]:
+    """(vertex index, km) of the route vertex nearest a point. Cached: validate_plan asks for
+    the same overnight and stop points many times."""
+    track: _Track = getattr(_corridor(), direction)
+    distances = [_haversine_km((lon, lat), c) for c in track.coords]
+    best = min(range(len(distances)), key=distances.__getitem__)
+    return best, distances[best]
 
 
 def _label(place: Place) -> str | list[float]:

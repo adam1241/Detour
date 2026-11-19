@@ -5,6 +5,7 @@ description = "Detour: AI road-trip planner mixing hotel nights with host-style 
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "jsonschema>=4.23",
     "psycopg[binary]>=3.2",
 ]
 
@@ -38,3 +39,8 @@ files = ["agent", "db", "scripts"]
 testpaths = ["agent/tests", "db/tests"]
 markers = ["db: needs a PostGIS database at DATABASE_URL"]
 addopts = "-ra --strict-markers"
+
+[[tool.mypy.overrides]]
+# jsonschema ships no type hints; avoids adding the types-jsonschema stub package.
+module = ["jsonschema", "jsonschema.*"]
+ignore_missing_imports = true
