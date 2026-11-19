@@ -162,6 +162,14 @@ def _vertex(track: _Track, place: Place) -> int:
     return best
 
 
+def distance_from_route_km(point: Sequence[float]) -> float:
+    """Straight-line km from a [lon, lat] point to the nearest route vertex (no snap limit).
+
+    Used to estimate side trips to places off the corridor road.
+    """
+    return _nearest("south", float(point[0]), float(point[1]))[1]
+
+
 @lru_cache(maxsize=4096)
 def _nearest(direction: str, lon: float, lat: float) -> tuple[int, float]:
     """(vertex index, km) of the route vertex nearest a point. Cached: validate_plan asks for

@@ -25,7 +25,6 @@
     "days": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 14,
       "items": { "$ref": "#/$defs/day" }
     },
     "totals": {
@@ -53,7 +52,6 @@
         "distance_km": { "type": "number", "minimum": 0 },
         "stops": {
           "type": "array",
-          "maxItems": 6,
           "items": {
             "type": "object",
             "additionalProperties": false,
@@ -71,11 +69,15 @@
             {
               "type": "object",
               "additionalProperties": false,
-              "required": ["kind", "id", "reason"],
+              "required": ["kind", "id", "reason_code", "reason"],
               "properties": {
                 "kind": { "enum": ["hotel", "host"] },
                 "id": { "type": "string", "pattern": "^(hotel|stop)_[a-z0-9_]+$" },
-                "reason": { "type": "string", "minLength": 1 }
+                "reason_code": {
+                  "description": "The deciding factor (spec §5.1): drive time, consecutive host nights, or budget.",
+                  "enum": ["drive_time", "consecutive_host_nights", "budget"]
+                },
+                "reason": { "type": "string", "minLength": 1, "maxLength": 200 }
               }
             }
           ]

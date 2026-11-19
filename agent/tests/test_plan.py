@@ -5,6 +5,8 @@ so the base plan is valid and each test breaks exactly one rule.
 """
 
 import copy
+import json
+import math
 from decimal import Decimal
 from typing import Any
 
@@ -53,8 +55,23 @@ CATALOG = InMemoryCatalog(
         stop("stop_museum_staunton", "Staunton, VA", "museum", "12.00"),
         stop("stop_farm_roanoke", "Roanoke, VA", "farm", "45.00", overnight_ok=True),
         stop("stop_museum_boone", "Boone, NC", "museum", "8.00"),
+        Place(
+            id="stop_winery_off_route",
+            kind="stop",
+            name="x",
+            lon=T["Staunton, VA"][0] + 0.2,
+            lat=T["Staunton, VA"][1],
+            type="winery",
+            est_cost_usd=Decimal("20.00"),
+        ),
     ]
 )
+
+
+def ov(
+    kind: str, pid: str, reason: str = "Short drive today.", code: str = "drive_time"
+) -> dict[str, str]:
+    return {"kind": kind, "id": pid, "reason_code": code, "reason": reason}
 
 
 def leg(start: Any, end: Any) -> tuple[float, float]:
@@ -72,7 +89,7 @@ def day(
         "distance_km": km,
         "stops": [{"id": s, "type": t, "reason": "On the way."} for s, t in stops],
         "overnight": overnight,
-        "narrative": "A good day on the road.",
+        "narrative": "A good day on the road. The views are worth it.",
     }
 
 
@@ -89,20 +106,20 @@ def base_plan() -> dict[str, Any]:
                 1,
                 "Washington, DC",
                 luray,
-                {"kind": "hotel", "id": "hotel_luray", "reason": "Short first day."},
+                ov("hotel", "hotel_luray", "Short first day."),
             ),
             day(
                 2,
                 luray,
                 roanoke,
-                {"kind": "hotel", "id": "hotel_roanoke", "reason": "Halfway."},
+                ov("hotel", "hotel_roanoke", "Halfway."),
                 stops=[("stop_museum_staunton", "museum")],
             ),
             day(
                 3,
                 roanoke,
                 boone,
-                {"kind": "hotel", "id": "hotel_boone", "reason": "Mountains."},
+                ov("hotel", "hotel_boone", "Mountains."),
                 stops=[("stop_museum_boone", "museum")],
             ),
             day(4, boone, "Asheville, NC", None),
@@ -122,6 +139,8 @@ def codes(plan: dict[str, Any], **kwargs: Any) -> list[str]:
 
 def test_cost_is_lodging_only_cash_and_hotel_points() -> None:
     cost = calculate_trip_cost(base_plan(), CATALOG)
+    assert isinstance(cost.cash_usd, Decimal)
+    assert all(isinstance(n.cash_usd, Decimal) for n in cost.nights)
     assert cost.cash_usd == Decimal("290.00")
     assert cost.points == 37000
     assert (cost.hotel_nights, cost.host_nights) == (3, 0)
@@ -135,11 +154,7 @@ def test_cost_is_lodging_only_cash_and_hotel_points() -> None:
 def test_host_night_costs_its_fee_and_no_points() -> None:
     plan = base_plan()
     plan["vehicle"] = "rv"
-    plan["days"][1]["overnight"] = {
-        "kind": "host",
-        "id": "stop_farm_roanoke",
-        "reason": "Farm stay.",
-    }
+    plan["days"][1]["overnight"] = ov("host", "stop_farm_roanoke", "Farm stay.")
     cost = calculate_trip_cost(plan, CATALOG)
     assert cost.cash_usd == Decimal("245.00")  # 80 + 45 + 120
     assert cost.points == 25000
@@ -148,6 +163,8 @@ def test_host_night_costs_its_fee_and_no_points() -> None:
 
 def test_cost_to_dict_uses_json_numbers() -> None:
     payload = calculate_trip_cost(base_plan(), CATALOG).to_dict()
+    json.dumps(payload)  # Decimal would raise here
+    assert type(payload["cash_usd"]) is float
     assert payload["cash_usd"] == 290.0
     assert payload["nights"][0] == {
         "day": 1,
@@ -168,11 +185,7 @@ def test_base_plan_is_valid() -> None:
 def test_rv_host_overnight_is_valid() -> None:
     plan = base_plan()
     plan["vehicle"] = "rv"
-    plan["days"][1]["overnight"] = {
-        "kind": "host",
-        "id": "stop_farm_roanoke",
-        "reason": "Farm stay.",
-    }
+    plan["days"][1]["overnight"] = ov("host", "stop_farm_roanoke", "Farm stay.")
     plan["totals"] = {"cash_usd": 245.0, "points": 25000, "hotel_nights": 2, "host_nights": 1}
     assert validate_plan(plan, CATALOG) == []
 
@@ -196,24 +209,20 @@ def test_unknown_ids_are_not_grounded() -> None:
 
 def test_overnight_kind_must_match_the_place() -> None:
     plan = base_plan()
-    plan["days"][0]["overnight"] = {"kind": "hotel", "id": "stop_museum_staunton", "reason": "x"}
+    plan["days"][0]["overnight"] = ov("hotel", "stop_museum_staunton", "x")
     assert "kind_mismatch" in codes(plan)
 
 
 def test_host_overnight_needs_an_overnight_host() -> None:
     plan = base_plan()
     plan["vehicle"] = "rv"
-    plan["days"][2]["overnight"] = {"kind": "host", "id": "stop_museum_boone", "reason": "x"}
+    plan["days"][2]["overnight"] = ov("host", "stop_museum_boone", "x")
     assert "not_overnight_host" in codes(plan)
 
 
 def test_car_trips_cannot_use_host_overnights() -> None:
     plan = base_plan()
-    plan["days"][1]["overnight"] = {
-        "kind": "host",
-        "id": "stop_farm_roanoke",
-        "reason": "Farm stay.",
-    }
+    plan["days"][1]["overnight"] = ov("host", "stop_farm_roanoke", "Farm stay.")
     plan["totals"] = {"cash_usd": 245.0, "points": 25000, "hotel_nights": 2, "host_nights": 1}
     assert codes(plan) == ["vehicle_rule"]
 
@@ -229,7 +238,7 @@ def test_n_days_means_n_minus_one_overnights() -> None:
     plan["days"][1]["overnight"] = None
     assert "overnight_missing" in codes(plan)
     plan = base_plan()
-    plan["days"][3]["overnight"] = {"kind": "hotel", "id": "hotel_boone", "reason": "x"}
+    plan["days"][3]["overnight"] = ov("hotel", "hotel_boone", "x")
     assert "last_day_overnight" in codes(plan)
 
 
@@ -259,14 +268,26 @@ def test_max_drive_per_day_is_a_hard_rule() -> None:
     assert {v.day for v in found} == {2, 3}
 
 
-def test_broken_constraint_is_acknowledged_only_with_warning_and_alternative() -> None:
+def test_each_broken_constraint_needs_its_own_warning_and_an_alternative() -> None:
     plan = base_plan()
     plan["warnings"] = ["Day 3 is 3h 30m of driving, over your 2h 30m limit."]
     assert blocking(validate_plan(plan, CATALOG, max_drive_minutes=150))  # no alternative yet
     plan["alternatives"] = ["Add a fifth day with a night in Wytheville."]
     found = validate_plan(plan, CATALOG, max_drive_minutes=150)
-    assert found and all(v.acknowledged for v in found)
-    assert blocking(found) == []
+    assert [(v.day, v.acknowledged) for v in found] == [(2, False), (3, True)]
+    plan["warnings"].append("Day 2 has 2h 55m of driving, also over the limit.")
+    assert blocking(validate_plan(plan, CATALOG, max_drive_minutes=150)) == []
+
+
+def test_budget_needs_a_budget_warning_and_an_alternative() -> None:
+    plan = base_plan()
+    plan["warnings"] = ["Day 3 is long."]
+    plan["alternatives"] = ["Stay at a cheaper hotel in Boone."]
+    assert [v.code for v in blocking(validate_plan(plan, CATALOG, budget_usd=Decimal("250")))] == [
+        "budget"
+    ]
+    plan["warnings"].append("Lodging is $290, over your $250 budget.")
+    assert blocking(validate_plan(plan, CATALOG, budget_usd=Decimal("250"))) == []
 
 
 def test_budget_is_lodging_only_and_hard() -> None:
@@ -284,12 +305,8 @@ def test_totals_must_match_the_cost_tool() -> None:
 def test_overnights_out_of_route_order_are_backtracking() -> None:
     plan = base_plan()
     roanoke, boone = T["Roanoke, VA"], T["Boone, NC"]
-    plan["days"][1] = day(
-        2, T["Luray, VA"], boone, {"kind": "hotel", "id": "hotel_boone", "reason": "x"}
-    )
-    plan["days"][2] = day(
-        3, boone, roanoke, {"kind": "hotel", "id": "hotel_roanoke", "reason": "x"}
-    )
+    plan["days"][1] = day(2, T["Luray, VA"], boone, ov("hotel", "hotel_boone", "x"))
+    plan["days"][2] = day(3, boone, roanoke, ov("hotel", "hotel_roanoke", "x"))
     plan["days"][3] = day(4, roanoke, "Asheville, NC", None)
     assert "backtracking" in codes(plan)
 
@@ -309,9 +326,9 @@ def test_places_off_the_corridor_are_route_errors() -> None:
 def test_replan_keeps_earlier_days_identical() -> None:
     previous = base_plan()
     replan = copy.deepcopy(previous)
-    replan["days"][2]["narrative"] = "A slower, shorter day."
+    replan["days"][2]["narrative"] = "A slower, shorter day. More time at the museum."
     assert codes(replan, previous_plan=previous, replan_from_day=3) == []
-    replan["days"][0]["narrative"] = "Changed."
+    replan["days"][0]["narrative"] = "Changed day one. Different words."
     found = validate_plan(replan, CATALOG, previous_plan=previous, replan_from_day=3)
     assert [(v.code, v.day) for v in found] == [("replan_changed_earlier_day", 1)]
 
@@ -354,3 +371,129 @@ def test_db_catalog_reads_hotels_and_stops(conn: Any) -> None:
         True,
     )
     assert h.point == pytest.approx([-78.46, 38.66])
+
+
+# --- review follow-ups -----------------------------------------------------------------------
+
+
+def test_cost_does_not_price_a_mismatched_kind() -> None:
+    plan = base_plan()
+    plan["days"][0]["overnight"] = ov("hotel", "stop_museum_staunton")
+    cost = calculate_trip_cost(plan, CATALOG)
+    assert cost.mismatched_ids == ["stop_museum_staunton"]
+    assert cost.cash_usd == Decimal("210.00")
+
+
+def test_ids_must_come_from_this_runs_tool_results() -> None:
+    plan = base_plan()
+    allowed = {"hotel_luray", "hotel_roanoke", "stop_museum_staunton", "stop_museum_boone"}
+    found = validate_plan(plan, CATALOG, allowed_ids=allowed)
+    assert [(v.code, v.day) for v in found] == [("not_from_tools", 3)]
+
+
+def test_overnight_past_the_destination_is_backtracking() -> None:
+    luray, roanoke = T["Luray, VA"], T["Roanoke, VA"]
+    plan = base_plan()
+    plan["destination"] = "Staunton, VA"
+    plan["days"] = [
+        day(1, "Washington, DC", luray, ov("hotel", "hotel_luray")),
+        day(2, luray, roanoke, ov("hotel", "hotel_roanoke")),
+        day(3, roanoke, "Staunton, VA", None),
+    ]
+    plan["totals"] = {"cash_usd": 170.0, "points": 22000, "hotel_nights": 2, "host_nights": 0}
+    assert [(v.code, v.day) for v in validate_plan(plan, CATALOG)] == [("backtracking", 2)]
+
+
+def test_northbound_trip_is_valid() -> None:
+    luray, roanoke, boone = T["Luray, VA"], T["Roanoke, VA"], T["Boone, NC"]
+    plan = base_plan()
+    plan["origin"], plan["destination"] = "Asheville, NC", "Washington, DC"
+    plan["days"] = [
+        day(1, "Asheville, NC", boone, ov("hotel", "hotel_boone")),
+        day(2, boone, roanoke, ov("hotel", "hotel_roanoke")),
+        day(
+            3,
+            roanoke,
+            luray,
+            ov("hotel", "hotel_luray"),
+            stops=[("stop_museum_staunton", "museum")],
+        ),
+        day(4, luray, "Washington, DC", None),
+    ]
+    assert validate_plan(plan, CATALOG) == []
+
+
+def test_side_trips_count_toward_drive_time() -> None:
+    plan = base_plan()
+    plan["days"][1]["stops"] = [{"id": "stop_winery_off_route", "type": "winery", "reason": "x"}]
+    found = validate_plan(plan, CATALOG)
+    assert [(v.code, v.day) for v in found] == [("drive_mismatch", 2), ("distance_mismatch", 2)]
+    assert "side trips" in found[0].message
+    corridor_minutes = plan["days"][1]["drive_minutes"]
+    over = validate_plan(plan, CATALOG, max_drive_minutes=corridor_minutes + 1)
+    assert ("max_drive", 2) in [(v.code, v.day) for v in over]
+
+
+def test_overnight_reason_is_one_sentence() -> None:
+    plan = base_plan()
+    plan["days"][0]["overnight"]["reason"] = "The weather looks nice. Bring a jacket."
+    assert [(v.code, v.day) for v in validate_plan(plan, CATALOG)] == [("reason_format", 1)]
+
+
+def test_overnight_reason_code_is_required() -> None:
+    plan = base_plan()
+    plan["days"][0]["overnight"]["reason_code"] = "weather"
+    assert {v.code for v in validate_plan(plan, CATALOG)} == {"schema"}
+
+
+@pytest.mark.parametrize("text", ["Too short.", "One. Two. Three. Four."])
+def test_narrative_is_two_to_three_sentences(text: str) -> None:
+    plan = base_plan()
+    plan["days"][1]["narrative"] = text
+    assert [(v.code, v.day) for v in validate_plan(plan, CATALOG)] == [("narrative_length", 2)]
+
+
+@pytest.mark.parametrize(
+    ("path", "value"), [("drive", math.nan), ("cash", math.nan), ("km", math.inf)]
+)
+def test_non_finite_numbers_are_schema_errors(path: str, value: float) -> None:
+    plan = base_plan()
+    if path == "drive":
+        plan["days"][0]["drive_minutes"] = value
+    elif path == "km":
+        plan["days"][0]["distance_km"] = value
+    else:
+        plan["totals"]["cash_usd"] = value
+    assert {v.code for v in validate_plan(plan, CATALOG)} == {"schema"}
+
+
+def test_cash_total_must_match_to_the_cent() -> None:
+    plan = base_plan()
+    plan["totals"]["cash_usd"] = 289.99
+    assert codes(plan) == ["totals_mismatch"]
+
+
+def test_unknown_stop_does_not_hide_other_violations() -> None:
+    plan = base_plan()
+    plan["days"][1]["stops"][0]["id"] = "stop_invented_winery"
+    plan["days"][0]["drive_minutes"] = 60
+    found = {v.code for v in validate_plan(plan, CATALOG, budget_usd=Decimal("200"))}
+    assert found == {"unknown_id", "drive_mismatch", "budget"}
+
+
+def test_catalog_errors_are_retryable_tool_errors() -> None:
+    import psycopg
+
+    from agent.plan.catalog import CatalogError, DbCatalog
+
+    class Down:
+        def execute(self, *_: Any) -> Any:
+            raise psycopg.OperationalError("connection refused")
+
+    with pytest.raises(CatalogError) as err:
+        DbCatalog(Down()).get(["hotel_luray"])  # type: ignore[arg-type]
+    assert err.value.to_dict() == {
+        "error": "catalog_unavailable",
+        "retryable": True,
+        "message": "place catalog is unavailable; retry",
+    }

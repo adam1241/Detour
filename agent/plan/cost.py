@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from typing import Any
 
-from agent.plan.catalog import Catalog
+from agent.plan.catalog import Catalog, Place
 
 
 @dataclass(frozen=True)
@@ -30,6 +30,7 @@ class TripCost:
     host_nights: int
     nights: list[NightCost] = field(default_factory=list)
     unknown_ids: list[str] = field(default_factory=list)
+    mismatched_ids: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -48,19 +49,31 @@ class TripCost:
                 for n in self.nights
             ],
             "unknown_ids": self.unknown_ids,
+            "mismatched_ids": self.mismatched_ids,
         }
 
 
-def calculate_trip_cost(plan: dict[str, Any], catalog: Catalog) -> TripCost:
-    """Cost of a (schema-valid) draft plan's overnights, priced from the catalog."""
+def calculate_trip_cost(
+    plan: dict[str, Any], catalog: Catalog, places: dict[str, Place] | None = None
+) -> TripCost:
+    """Cost of a (schema-valid) draft plan's overnights, priced from the catalog.
+
+    `places` lets validate_plan pass the snapshot it already loaded, so routing and cost use
+    the same data. Overnights whose kind doesn't match their place are not priced.
+    """
     overnights = [(d["day"], d["overnight"]) for d in plan["days"] if d.get("overnight")]
-    places = catalog.get(o["id"] for _, o in overnights)
+    if places is None:
+        places = catalog.get(o["id"] for _, o in overnights)
     nights: list[NightCost] = []
     unknown: list[str] = []
+    mismatched: list[str] = []
     for day, o in overnights:
         place = places.get(o["id"])
         if place is None:
             unknown.append(o["id"])
+            continue
+        if place.kind != ("hotel" if o["kind"] == "hotel" else "stop"):
+            mismatched.append(o["id"])
             continue
         if o["kind"] == "hotel":
             cash, points = place.price_usd or Decimal("0"), place.points_per_night or 0
@@ -74,4 +87,5 @@ def calculate_trip_cost(plan: dict[str, Any], catalog: Catalog) -> TripCost:
         host_nights=sum(1 for n in nights if n.kind == "host"),
         nights=nights,
         unknown_ids=unknown,
+        mismatched_ids=mismatched,
     )

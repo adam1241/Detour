@@ -28,6 +28,17 @@ class Place:
         return [self.lon, self.lat]
 
 
+class CatalogError(RuntimeError):
+    """The place catalog couldn't be read (e.g. database down). Retryable at the tool boundary."""
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "error": "catalog_unavailable",
+            "retryable": True,
+            "message": "place catalog is unavailable; retry",
+        }
+
+
 class Catalog(Protocol):
     def get(self, ids: Iterable[str]) -> dict[str, Place]:
         """The places that exist among `ids` (unknown ids are simply absent)."""
@@ -57,7 +68,12 @@ class DbCatalog:
         self._conn = conn
 
     def get(self, ids: Iterable[str]) -> dict[str, Place]:
-        wanted = sorted(set(ids))
+        try:
+            return self._get(sorted(set(ids)))
+        except psycopg.Error as err:
+            raise CatalogError(str(err)) from err
+
+    def _get(self, wanted: list[str]) -> dict[str, Place]:
         found: dict[str, Place] = {}
         for r in self._conn.execute(HOTELS_SQL, (wanted,)).fetchall():
             found[r[0]] = Place(
