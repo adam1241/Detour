@@ -7,6 +7,7 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "jsonschema>=4.23",
     "psycopg[binary]>=3.2",
+    "pyyaml>=6.0",
 ]
 
 [dependency-groups]
@@ -33,14 +34,14 @@ select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "RUF"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["agent", "db", "scripts"]
+files = ["agent", "db", "scripts", "evals"]
 
 [tool.pytest.ini_options]
-testpaths = ["agent/tests", "db/tests"]
+testpaths = ["agent/tests", "db/tests", "evals/tests"]
 markers = ["db: needs a PostGIS database at DATABASE_URL"]
 addopts = "-ra --strict-markers"
 
 [[tool.mypy.overrides]]
-# jsonschema ships no type hints; avoids adding the types-jsonschema stub package.
-module = ["jsonschema", "jsonschema.*"]
+# jsonschema and PyYAML ship no type hints; avoids adding stub packages.
+module = ["jsonschema", "jsonschema.*", "yaml"]
 ignore_missing_imports = true

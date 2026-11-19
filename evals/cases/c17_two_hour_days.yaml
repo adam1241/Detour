@@ -1,0 +1,12 @@
+id: c17_two_hour_days
+persona: family
+request: "DC to Asheville in 4 days but never more than 2 hours of driving in a day."
+origin: Washington, DC
+destination: Asheville, NC
+days: 4
+vehicle: car
+max_drive_minutes: 120
+budget_usd: null
+outdoor_leaning: false
+# ~10.6 h over 4 days can't stay under 2 h a day.
+infeasible: true

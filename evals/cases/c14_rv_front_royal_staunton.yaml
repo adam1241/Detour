@@ -1,0 +1,11 @@
+id: c14_rv_front_royal_staunton
+persona: rv_couple
+request: "Front Royal to Staunton in 2 days in the RV, we'd love a riverside farm night."
+origin: Front Royal, VA
+destination: Staunton, VA
+days: 2
+vehicle: rv
+max_drive_minutes: 300
+budget_usd: null
+outdoor_leaning: true
+infeasible: false

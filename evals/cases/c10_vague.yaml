@@ -1,0 +1,11 @@
+id: c10_vague
+persona: weekend_explorer
+request: "Plan me something fun heading south from DC."
+origin: Washington, DC
+destination: null
+days: null
+vehicle: car
+max_drive_minutes: 300
+budget_usd: null
+outdoor_leaning: false
+infeasible: false

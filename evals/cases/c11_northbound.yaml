@@ -1,0 +1,11 @@
+id: c11_northbound
+persona: family
+request: "Asheville to Washington DC over 4 days, under $500, we drive a minivan."
+origin: Asheville, NC
+destination: Washington, DC
+days: 4
+vehicle: car
+max_drive_minutes: 300
+budget_usd: 500
+outdoor_leaning: false
+infeasible: false

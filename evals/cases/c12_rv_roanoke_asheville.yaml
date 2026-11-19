@@ -1,0 +1,11 @@
+id: c12_rv_roanoke_asheville
+persona: rv_couple
+request: "Roanoke to Asheville in 2 days in our camper van, farm overnight if possible."
+origin: Roanoke, VA
+destination: Asheville, NC
+days: 2
+vehicle: rv
+max_drive_minutes: 300
+budget_usd: null
+outdoor_leaning: true
+infeasible: false

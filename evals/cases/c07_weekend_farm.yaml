@@ -1,0 +1,11 @@
+id: c07_weekend_farm
+persona: weekend_explorer
+request: "Three days DC to Staunton, I want a farm visit and a vineyard, nothing fancy."
+origin: Washington, DC
+destination: Staunton, VA
+days: 3
+vehicle: car
+max_drive_minutes: 300
+budget_usd: null
+outdoor_leaning: true
+infeasible: false

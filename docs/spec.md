@@ -218,6 +218,7 @@ Tracing: every run logs tool calls, order, latency, tokens, cost, prompt_version
 - **Infeasible cases:** a broken constraint passes **only if** the case is labeled `infeasible: true` **and** the plan lists the violation in `warnings` **and** offers at least one entry in `alternatives`. Otherwise it fails.
 - **Comparison with `main`:** a PR fails if any gated score drops below its threshold, or if a ≥ 95% check is **more than 1 case worse** than `main`'s last recorded result. Grounding and schema have **zero tolerance**.
 - **Tracked, not gated:** narrative quality (LLM-as-judge, 1–5, stretch), latency (first progress, full plan) p50/p95, cost per plan, hotel-conversion rate (share of `outdoor_leaning` trips that include ≥ 1 hotel night).
+- **Implementation (`evals/`):** 20 cases in `evals/cases/*.yaml` (labels: persona, vehicle, `outdoor_leaning`, `infeasible`, optional `replan`); checks in `evals/checks.py` built on `validate_plan`; runner `python -m evals.runner`. The grounding check covers invented numbers too (`drive_mismatch`, `distance_mismatch`, `totals_mismatch`), not only unknown IDs, since CLAUDE.md forbids invented distances and prices. A planner crash or missing plan fails every applicable check.
 - **When evals run in CI:** only on PRs that touch `agent/`, `prompts/` or `evals/` (plus manual trigger).
 
 ### 8.2 Demo success criteria

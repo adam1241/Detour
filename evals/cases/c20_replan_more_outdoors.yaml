@@ -1,0 +1,14 @@
+id: c20_replan_more_outdoors
+persona: rv_couple
+request: "More outdoors please, fewer museums."
+replan:
+  of: c02_rv_couple_wineries
+  from_day: 2
+origin: Washington, DC
+destination: Asheville, NC
+days: 5
+vehicle: rv
+max_drive_minutes: 300
+budget_usd: null
+outdoor_leaning: true
+infeasible: false

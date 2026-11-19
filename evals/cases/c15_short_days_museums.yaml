@@ -1,0 +1,11 @@
+id: c15_short_days_museums
+persona: family
+request: "DC to Roanoke in 3 days, no more than 3 hours of driving a day, we like history museums."
+origin: Washington, DC
+destination: Roanoke, VA
+days: 3
+vehicle: car
+max_drive_minutes: 180
+budget_usd: null
+outdoor_leaning: false
+infeasible: false

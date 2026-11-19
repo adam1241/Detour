@@ -1,0 +1,11 @@
+id: c05_family_staunton_asheville
+persona: family
+request: "Staunton to Asheville over 3 days with two kids, max 4 hours in the car per day, budget $400."
+origin: Staunton, VA
+destination: Asheville, NC
+days: 3
+vehicle: car
+max_drive_minutes: 240
+budget_usd: 400
+outdoor_leaning: false
+infeasible: false

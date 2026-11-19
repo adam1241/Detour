@@ -52,6 +52,9 @@ class InMemoryCatalog:
     def get(self, ids: Iterable[str]) -> dict[str, Place]:
         return {i: self._places[i] for i in ids if i in self._places}
 
+    def all(self) -> list[Place]:
+        return list(self._places.values())
+
 
 HOTELS_SQL = """
 SELECT id, name, ST_X(geom), ST_Y(geom), price_usd, points_per_night

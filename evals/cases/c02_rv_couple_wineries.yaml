@@ -1,0 +1,11 @@
+id: c02_rv_couple_wineries
+persona: rv_couple
+request: "Five slow days from Washington to Asheville in our motorhome, as many winery stops as possible, no rush."
+origin: Washington, DC
+destination: Asheville, NC
+days: 5
+vehicle: rv
+max_drive_minutes: 300
+budget_usd: null
+outdoor_leaning: true
+infeasible: false
