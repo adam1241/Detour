@@ -4,13 +4,14 @@ version = "0.1.0"
 description = "Detour: AI road-trip planner mixing hotel nights with host-style stops (unofficial proof of concept)"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = [
+    "psycopg[binary]>=3.2",
+]
 
 [dependency-groups]
 dev = [
     "mypy>=1.13",
     "pre-commit>=4.0",
-    "psycopg[binary]>=3.2",
     "pytest>=8.3",
     "ruff>=0.8",
 ]

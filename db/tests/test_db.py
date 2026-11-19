@@ -1,18 +1,14 @@
 """Database tests. They need PostGIS at DATABASE_URL and run in CI's `spatial` job.
 
-Each test runs in its own throwaway schema (dropped afterwards), so pointing DATABASE_URL at a
-development database never touches its real tables.
+Fixtures (conftest.py) give each test its own throwaway schema, dropped afterwards, so pointing
+DATABASE_URL at a development database never touches its real tables.
 """
 
-import os
-import uuid
-from collections.abc import Iterator
 from decimal import Decimal
 from pathlib import Path
 
 import psycopg
 import pytest
-from psycopg import sql
 
 from db.migrate import MIGRATIONS_DIR, apply_migrations
 from db.seed.load_seed import FIXTURE_DIR, load, read_hotels, read_stops
@@ -20,32 +16,6 @@ from db.seed.load_seed import FIXTURE_DIR, load, read_hotels, read_stops
 pytestmark = pytest.mark.db
 
 TABLES = ("hotels", "stops", "trips", "schema_migrations")
-
-
-def _url() -> str:
-    url = os.environ.get("DATABASE_URL")
-    if not url:
-        pytest.fail("DATABASE_URL is not set; db tests need a PostGIS database")
-    return url
-
-
-@pytest.fixture
-def schema() -> Iterator[str]:
-    """A unique, empty schema owned by this test, dropped afterwards."""
-    name = f"detour_test_{uuid.uuid4().hex[:12]}"
-    with psycopg.connect(_url(), autocommit=True) as admin:
-        admin.execute("CREATE EXTENSION IF NOT EXISTS postgis SCHEMA public")
-        admin.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(name)))
-        try:
-            yield name
-        finally:
-            admin.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(name)))
-
-
-@pytest.fixture
-def conn(schema: str) -> Iterator[psycopg.Connection]:
-    with psycopg.connect(_url(), autocommit=True, options=f"-c search_path={schema},public") as c:
-        yield c
 
 
 def test_migrations_create_tables_and_indexes(conn: psycopg.Connection, schema: str) -> None:
@@ -69,9 +39,9 @@ def test_migrations_rerun_is_noop(conn: psycopg.Connection) -> None:
     assert apply_migrations(conn, MIGRATIONS_DIR) == []
 
 
-def test_migrations_need_autocommit_connection(schema: str) -> None:
+def test_migrations_need_autocommit_connection(db_url: str, schema: str) -> None:
     with (
-        psycopg.connect(_url(), options=f"-c search_path={schema},public") as c,
+        psycopg.connect(db_url, options=f"-c search_path={schema},public") as c,
         pytest.raises(ValueError, match="autocommit"),
     ):
         apply_migrations(c, MIGRATIONS_DIR)

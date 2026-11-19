@@ -49,15 +49,16 @@ LIMIT $4;
 **Accepted: Option A for v1.** Default `max_detour_km` = 30 (spec §5.3). Document Option C as the scale path in this ADR (no code). Specifics:
 - Column type `geometry(Point,4326)`; expression index `CREATE INDEX ... USING GIST ((geom::geography))`.
 - `distance_from_route_km` is the perpendicular distance; also return `detour_km_estimate = 2 × distance` and document it as an estimate.
-- `find_hotels_near` takes either a point (radius search) or a `(from_position, to_position)` pair on the route, cut with `ST_LineSubstring`. One function, one code path.
+- `find_hotels_near` takes either a `[lon, lat]` point or a route segment as a GeoJSON LineString (the agent passes `get_route`'s geometry for that day). One function, one code path. *(Implemented 2026-11-18: a LineString instead of a `(from_position, to_position)` pair, since `get_route` already slices the route at any on-corridor point.)*
 - Ordering by `position_along_route` is what enforces "no backtracking" upstream in `validate_plan`.
 
 Tests (written first, run against the PostGIS service container):
 - Point exactly on the line → distance ≈ 0, included.
-- Points at known offsets (e.g. 29.9 km and 30.1 km with the default `max_detour_km=30`) → in/out correctly.
+- Points at known offsets (28 km in, 32 km out with `max_detour_km=30`) → in/out correctly. *(Implemented 2026-11-18, plus a boundary test to the millimetre: a cutoff 1 mm above PostGIS's own WGS84 distance to a stop must include it, and 1 m below must exclude it (exact equality is not testable in floating point). An on-route stop returns distance ≈ 0.)*
 - Positions are monotonic for points placed in order along the line.
 - Type filter and `limit` respected; empty result is `[]`, not an error.
-- `EXPLAIN` test (or manual check documented in PR) that the expression index is used.
+- `EXPLAIN` test that the expression index is used. *(Implemented 2026-11-18 with `SET enable_seqscan = off`, which makes the check deterministic on a tiny test table: both queries must show `stops_geog_gix` / `hotels_geog_gix`. With real data volumes the planner decides on cost.)*
+- `position_along_route` is returned unrounded, because `validate_plan` compares positions to detect backtracking.
 
 ## Consequences
 
