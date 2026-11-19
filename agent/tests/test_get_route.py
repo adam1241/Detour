@@ -1,0 +1,176 @@
+"""get_route reads the cached corridor (db/seed/corridor_route.geojson); no network."""
+
+import json
+import math
+from typing import Any
+
+import pytest
+
+from agent.tools.get_route import CORRIDOR_FILE, CORRIDOR_TOWNS, RouteError, get_route
+
+
+def km_between(a: list[float], b: list[float]) -> float:
+    """Great-circle distance between two [lon, lat] points."""
+    lon1, lat1, lon2, lat2 = map(math.radians, (*a, *b))
+    h = (
+        math.sin((lat2 - lat1) / 2) ** 2
+        + math.cos(lat1) * math.cos(lat2) * math.sin((lon2 - lon1) / 2) ** 2
+    )
+    return 6371.0 * 2 * math.asin(math.sqrt(h))
+
+
+def cached_legs(direction: str) -> list[dict[str, Any]]:
+    data = json.loads(CORRIDOR_FILE.read_text(encoding="utf-8"))
+    return [f for f in data["features"] if f["properties"]["direction"] == direction]
+
+
+def leg_midpoint(direction: str, start: str) -> list[float]:
+    leg = next(f for f in cached_legs(direction) if f["properties"]["from"] == start)
+    coords: list[list[float]] = leg["geometry"]["coordinates"]
+    return coords[len(coords) // 2]
+
+
+# --- towns -------------------------------------------------------------------------------
+
+
+def test_full_corridor_shape_and_totals() -> None:
+    route = get_route("Washington, DC", "Asheville, NC")
+    assert route["origin"] == "Washington, DC"
+    assert route["destination"] == "Asheville, NC"
+    assert route["geometry"]["type"] == "LineString"
+    assert len(route["legs"]) == 6
+    assert route["distance_km"] == pytest.approx(
+        sum(leg["distance_km"] for leg in route["legs"]), abs=0.05
+    )
+    assert route["duration_min"] == pytest.approx(
+        sum(leg["duration_min"] for leg in route["legs"]), abs=0.05
+    )
+    # Matches the cached OSRM southbound totals.
+    south = cached_legs("south")
+    assert route["distance_km"] == pytest.approx(
+        sum(f["properties"]["distance_km"] for f in south), abs=0.05
+    )
+    # Real road distance via the six towns: above the ~550 km straight line, below 1200 km.
+    assert 650 < route["distance_km"] < 1200
+    assert 8 * 60 < route["duration_min"] < 16 * 60
+
+
+def test_coordinates_are_lon_lat_inside_the_corridor() -> None:
+    coords = get_route("Washington, DC", "Asheville, NC")["geometry"]["coordinates"]
+    assert len(coords) > 100
+    for lon, lat in coords:
+        assert -83.0 <= lon <= -76.8
+        assert 35.3 <= lat <= 39.2
+
+
+def test_route_starts_and_ends_near_the_towns() -> None:
+    coords = get_route("Luray", "Roanoke")["geometry"]["coordinates"]
+    assert km_between(coords[0], CORRIDOR_TOWNS["Luray, VA"]) < 5
+    assert km_between(coords[-1], CORRIDOR_TOWNS["Roanoke, VA"]) < 5
+
+
+def test_sub_route_uses_only_its_legs() -> None:
+    full = get_route("Washington, DC", "Asheville, NC")
+    part = get_route("Luray, VA", "Roanoke, VA")
+    assert [(leg["from"], leg["to"]) for leg in part["legs"]] == [
+        ("Luray, VA", "Staunton, VA"),
+        ("Staunton, VA", "Roanoke, VA"),
+    ]
+    assert part["distance_km"] < full["distance_km"]
+
+
+def test_reverse_direction_uses_northbound_data() -> None:
+    north = get_route("Asheville, NC", "Washington, DC")
+    assert north["legs"][0]["from"] == "Asheville, NC"
+    assert north["legs"][-1]["to"] == "Washington, DC"
+    assert km_between(north["geometry"]["coordinates"][0], CORRIDOR_TOWNS["Asheville, NC"]) < 5
+    expected = sum(f["properties"]["distance_km"] for f in cached_legs("north"))
+    assert north["distance_km"] == pytest.approx(expected, abs=0.05)
+    first = cached_legs("north")[0]["geometry"]["coordinates"]
+    assert north["geometry"]["coordinates"][: len(first)] == first
+
+
+@pytest.mark.parametrize(
+    "name", ["Washington, D.C.", "washington dc", "DC", "Washington", "District of Columbia"]
+)
+def test_dc_aliases(name: str) -> None:
+    assert get_route(name, "Front Royal")["origin"] == "Washington, DC"
+
+
+def test_state_suffixes_accepted() -> None:
+    route = get_route("Boone, North Carolina", "asheville nc")
+    assert (route["origin"], route["destination"]) == ("Boone, NC", "Asheville, NC")
+
+
+# --- points on the corridor (e.g. an overnight hotel) ------------------------------------
+
+
+def test_route_to_a_point_inside_a_leg() -> None:
+    point = leg_midpoint("south", "Luray, VA")
+    to_luray = get_route("Washington, DC", "Luray, VA")
+    to_staunton = get_route("Washington, DC", "Staunton, VA")
+    route = get_route("Washington, DC", point)
+    assert to_luray["distance_km"] < route["distance_km"] < to_staunton["distance_km"]
+    assert to_luray["duration_min"] < route["duration_min"] < to_staunton["duration_min"]
+    assert km_between(route["geometry"]["coordinates"][-1], point) < 1
+    assert route["destination"] == point
+
+
+def test_point_to_point_within_one_leg() -> None:
+    leg = next(f for f in cached_legs("south") if f["properties"]["from"] == "Roanoke, VA")
+    coords = leg["geometry"]["coordinates"]
+    a, b = coords[len(coords) // 4], coords[3 * len(coords) // 4]
+    route = get_route(a, b)
+    assert 0 < route["distance_km"] < leg["properties"]["distance_km"]
+    assert len(route["legs"]) == 1
+
+
+def test_point_near_but_off_the_line_is_snapped() -> None:
+    lon, lat = leg_midpoint("south", "Staunton, VA")
+    route = get_route("Staunton, VA", [lon + 0.05, lat])  # a few km east of the road
+    assert route["distance_km"] > 0
+
+
+def test_reverse_route_from_a_point_uses_northbound_legs() -> None:
+    point = leg_midpoint("south", "Luray, VA")
+    route = get_route(point, "Washington, DC")
+    assert route["legs"][-1]["to"] == "Washington, DC"
+    assert route["distance_km"] < get_route("Staunton, VA", "Washington, DC")["distance_km"]
+
+
+# --- errors -------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("place", ["Richmond, VA", "Charlotte", "", [-77.43, 37.54]])
+def test_places_off_the_corridor_rejected(place: Any) -> None:
+    with pytest.raises(RouteError, match="outside v1 coverage") as err:
+        get_route(place, "Asheville, NC")
+    assert err.value.code == "outside_coverage"
+    assert "Luray, VA" in err.value.supported_towns
+
+
+def test_error_is_structured_for_the_agent() -> None:
+    with pytest.raises(RouteError) as err:
+        get_route("Richmond", "Asheville")
+    payload = err.value.to_dict()
+    assert payload["error"] == "outside_coverage"
+    assert "Richmond" in payload["message"]
+    assert payload["supported_towns"][0] == "Washington, DC"
+
+
+def test_same_origin_and_destination_rejected() -> None:
+    with pytest.raises(RouteError, match="same place") as err:
+        get_route("Luray", "Luray, VA")
+    assert err.value.code == "same_place"
+
+
+def test_waypoints_between_origin_and_destination_accepted() -> None:
+    route = get_route("Washington, DC", "Roanoke, VA", waypoints=["Luray", "Staunton"])
+    assert route["destination"] == "Roanoke, VA"
+
+
+@pytest.mark.parametrize("waypoints", [["Boone"], ["Staunton", "Luray"]])
+def test_waypoints_off_segment_or_out_of_order_rejected(waypoints: list[str]) -> None:
+    with pytest.raises(RouteError, match="waypoint") as err:
+        get_route("Washington, DC", "Roanoke, VA", waypoints=waypoints)
+    assert err.value.code == "bad_waypoint"

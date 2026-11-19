@@ -8,6 +8,8 @@ An AI road-trip planner that mixes hotel nights with outdoor host-style stops (w
 >
 > **Example host-style stops.** Places are shown as examples of the kind of stop a host network offers. We never claim that any business is a Harvest Hosts member.
 >
+> **Road data.** Town coordinates come from OpenStreetMap Nominatim and the route from the OSRM demo server (car profile, no traffic), fetched once and cached in `db/seed/corridor_route.geojson`. Map data © OpenStreetMap contributors (ODbL).
+>
 > **Road conditions are not reflected.** Closures (including Hurricane Helene-related Blue Ridge Parkway closures) and seasonal closures are not modelled. The route uses towns as waypoints (Front Royal, Luray, Staunton, Roanoke, Boone, Asheville), not Parkway segments, so drive times follow town-to-town roads.
 
 **Status:** Day 1 of 4 (kickoff). Nothing runnable yet.
