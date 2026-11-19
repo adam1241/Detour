@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://detour.example/schema/plan.schema.json",
+  "title": "Detour trip plan",
+  "description": "Plan output contract (spec §5.2). IDs only; the server hydrates names and coordinates after validation (ADR-005).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "trip_id",
+    "summary",
+    "origin",
+    "destination",
+    "vehicle",
+    "days",
+    "totals",
+    "warnings",
+    "alternatives"
+  ],
+  "properties": {
+    "trip_id": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string", "minLength": 1 },
+    "origin": { "type": "string", "minLength": 1 },
+    "destination": { "type": "string", "minLength": 1 },
+    "vehicle": { "enum": ["rv", "car"] },
+    "days": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/day" }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cash_usd", "points", "hotel_nights", "host_nights"],
+      "properties": {
+        "cash_usd": { "type": "number", "minimum": 0 },
+        "points": { "type": "integer", "minimum": 0 },
+        "hotel_nights": { "type": "integer", "minimum": 0 },
+        "host_nights": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "warnings": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "alternatives": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  },
+  "$defs": {
+    "day": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["day", "drive_minutes", "distance_km", "stops", "overnight", "narrative"],
+      "properties": {
+        "day": { "type": "integer", "minimum": 1 },
+        "drive_minutes": { "type": "number", "minimum": 0 },
+        "distance_km": { "type": "number", "minimum": 0 },
+        "stops": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "type", "reason"],
+            "properties": {
+              "id": { "type": "string", "pattern": "^stop_[a-z0-9_]+$" },
+              "type": { "enum": ["winery", "farm", "brewery", "museum"] },
+              "reason": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "overnight": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "id", "reason_code", "reason"],
+              "properties": {
+                "kind": { "enum": ["hotel", "host"] },
+                "id": { "type": "string", "pattern": "^(hotel|stop)_[a-z0-9_]+$" },
+                "reason_code": {
+                  "description": "The deciding factor (spec §5.1): drive time, consecutive host nights, or budget.",
+                  "enum": ["drive_time", "consecutive_host_nights", "budget"]
+                },
+                "reason": { "type": "string", "minLength": 1, "maxLength": 200 }
+              }
+            }
+          ]
+        },
+        "narrative": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -112,7 +112,7 @@ A planner that naturally inserts hotel nights where they make sense (long drive 
       "drive_minutes": 0,
       "distance_km": 0,
       "stops": [{ "id": "stop_123", "type": "winery", "reason": "string" }],
-      "overnight": { "kind": "hotel | host", "id": "hotel_456", "reason": "string" },
+      "overnight": { "kind": "hotel | host", "id": "hotel_456", "reason_code": "drive_time | consecutive_host_nights | budget", "reason": "string, one sentence" },
       "narrative": "string, 2-3 sentences, inspiring"
     }
   ],
@@ -135,6 +135,16 @@ A planner that naturally inserts hotel nights where they make sense (long drive 
 | `validate_plan` | draft plan | list of rule violations (empty = valid) |
 
 The agent must call `validate_plan` before returning a plan, and fix any violations it finds.
+
+Implementation (PR "plan validation", 2026-11-19):
+- Schema: [`packages/schema/plan.schema.json`](../packages/schema/plan.schema.json) (JSON Schema 2020-12). Each overnight carries a `reason_code` (`drive_time`, `consecutive_host_nights`, `budget`) plus a one-sentence `reason`.
+- `calculate_trip_cost` (`agent/plan/cost.py`): lodging cash (hotel price or host fee), points for hotel nights only, per-night breakdown; money as `Decimal`. Overnights whose kind doesn't match their place are not priced.
+- `validate_plan` (`agent/plan/validate.py`) returns violations with a stable `code`: `schema`, `day_numbers`, `overnight_missing`, `last_day_overnight`, `narrative_length`, `unknown_id`, `not_from_tools`, `kind_mismatch`, `type_mismatch`, `not_overnight_host`, `vehicle_rule`, `reason_format`, `route_error`, `drive_mismatch`, `distance_mismatch`, `max_drive`, `backtracking`, `budget`, `totals_mismatch`, `replan_changed_earlier_day`.
+- Grounding: IDs must exist in the catalog and, when the agent passes `allowed_ids`, must have been returned by a tool in this run.
+- Drive time and distance per day = `get_route` between the previous overnight and the next, plus side trips: off-route stops (there and back) and off-route lodgings, estimated as straight-line distance to the route x 1.3 at 50 km/h. Tolerance: 5 min or 5%, 2 km or 5%. The max-drive rule uses the same total.
+- Route order: every stop and overnight must lie on the way from origin to destination (2% or 5 km slack), and its distance along the way must not go down (1 km tolerance).
+- Cash totals must equal the cost tool exactly; non-finite numbers are schema errors.
+- `max_drive` and `budget` are `acknowledged` (not blocking) only when the plan has an alternative and a warning about that exact violation (`max_drive`: a warning naming "Day N" and driving; `budget`: a warning mentioning the budget).
 
 ---
 
