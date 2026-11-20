@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "detour-demo-sample",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "python", "-m", "agent.server", "--sample", "--port", "8000"],
+      "env": { "UV_PROJECT_ENVIRONMENT": "C:/Users/lagss/.venvs/detour" },
+      "port": 8000
+    }
+  ]
+}

@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detour: road trips with hotel nights and host-style stops</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+  :root {
+    --bg: #f6f4ef; --panel: #fffdf8; --ink: #1f2a24; --muted: #66706a; --line: #e3ded3;
+    --accent: #2f6b4f; --accent-ink: #fff; --warn: #9a5b00; --warn-bg: #fff4e0;
+    --d1: #2f6b4f; --d2: #c0692a; --d3: #3a5f9e; --d4: #8a3f8f; --d5: #6b7a1f; --d6: #9e3a3a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+         color: var(--ink); background: var(--bg); }
+  .app { display: grid; grid-template-columns: minmax(360px, 460px) 1fr; height: 100vh; }
+  aside { overflow-y: auto; padding: 20px 22px 40px; background: var(--panel);
+          border-right: 1px solid var(--line); }
+  #map { height: 100vh; }
+  h1 { font-size: 22px; margin: 0 0 2px; letter-spacing: -0.01em; }
+  .tag { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  textarea, select, input { width: 100%; font: inherit; color: inherit; padding: 9px 10px;
+          border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+  textarea { min-height: 76px; resize: vertical; }
+  .row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  button { font: inherit; border: 0; border-radius: 8px; padding: 10px 14px; cursor: pointer;
+           background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  button.ghost { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+  button:disabled { opacity: .5; cursor: wait; }
+  .go { width: 100%; margin-top: 14px; }
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .examples button { background: transparent; color: var(--accent); padding: 3px 8px;
+                     font-weight: 500; font-size: 13px; border: 1px dashed var(--line); }
+  #progress { list-style: none; padding: 0; margin: 16px 0 0; font-size: 14px; color: var(--muted); }
+  #progress li::before { content: "✓ "; color: var(--accent); }
+  #progress li:last-child::before { content: "… "; }
+  #progress.done li:last-child::before { content: "✓ "; }
+  .error { background: #fdecec; color: #8a1f1f; padding: 10px 12px; border-radius: 8px; margin-top: 14px; }
+  .summary { margin: 18px 0 10px; font-size: 16px; }
+  .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .stat { background: var(--bg); border-radius: 8px; padding: 8px 10px; }
+  .stat b { display: block; font-size: 18px; }
+  .stat span { font-size: 12px; color: var(--muted); }
+  .warn { background: var(--warn-bg); color: var(--warn); padding: 8px 12px; border-radius: 8px;
+          margin: 6px 0; font-size: 14px; }
+  .day { border: 1px solid var(--line); border-left: 5px solid var(--c); border-radius: 10px;
+         padding: 12px 14px; margin: 10px 0; background: #fff; }
+  .day h3 { margin: 0 0 4px; font-size: 15px; display: flex; justify-content: space-between; }
+  .day h3 small { color: var(--muted); font-weight: 400; }
+  .day p { margin: 6px 0; }
+  .item { display: flex; gap: 8px; margin: 6px 0; font-size: 14px; }
+  .pill { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; border-radius: 99px;
+          padding: 2px 7px; height: fit-content; white-space: nowrap; background: var(--bg); color: var(--muted); }
+  .pill.hotel { background: #e6eefb; color: #2a4c8a; }
+  .pill.host { background: #e7f3ec; color: #2f6b4f; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .replan { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+  .replan .btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  footer { margin-top: 24px; font-size: 12px; color: var(--muted); }
+  @media (max-width: 860px) { .app { grid-template-columns: 1fr; height: auto; }
+    #map { height: 55vh; order: -1; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <h1>Detour</h1>
+    <p class="tag">Road trips from DC to Asheville that mix hotel nights with farm and winery stops.</p>
+
+    <form id="form">
+      <label for="text">Describe your trip</label>
+      <textarea id="text" required maxlength="1000">DC to Asheville, 4 days, under $600, in our RV. We love farms and wineries.</textarea>
+      <div class="examples" id="examples">
+        <button type="button" data-v="car" data-t="Weekend from DC to Staunton by car, 2 days, museums please.">Car weekend</button>
+        <button type="button" data-v="rv" data-t="Asheville to DC in 3 days by RV, as cheap as possible.">Northbound RV</button>
+        <button type="button" data-v="car" data-t="Family trip DC to Asheville, 4 days by car, no more than 4 hours of driving a day.">Family, short days</button>
+      </div>
+      <div class="row">
+        <div><label for="vehicle">Vehicle</label>
+          <select id="vehicle"><option value="rv">RV</option><option value="car">Car</option></select></div>
+        <div><label for="budget">Lodging budget $</label>
+          <input id="budget" type="number" min="1" step="1" placeholder="none"></div>
+        <div><label for="maxdrive">Max drive/day</label>
+          <select id="maxdrive"><option value="300">5 h</option><option value="240">4 h</option>
+            <option value="360">6 h</option><option value="180">3 h</option></select></div>
+      </div>
+      <button class="go" id="go" type="submit">Plan my trip</button>
+    </form>
+
+    <ul id="progress"></ul>
+    <div id="result"></div>
+
+    <footer>
+      Unofficial proof of concept with a hand-curated <b>sample</b> of public data (source URL on
+      every row). Not affiliated with or endorsed by any hotel brand or host network. Host places
+      are example host-style stops. Prices are a one-night sample and will differ. Check road
+      closures before you go. Map © OpenStreetMap contributors.
+    </footer>
+  </aside>
+  <div id="map"></div>
+</div>
+
+<script>
+const DAY_COLORS = ["--d1", "--d2", "--d3", "--d4", "--d5", "--d6"].map(
+  v => getComputedStyle(document.documentElement).getPropertyValue(v).trim());
+const $ = id => document.getElementById(id);
+let current = null;  // last hydrated response: {plan, places, route_geojson}
+let request = null;  // last request body
+let markers = [];
+
+const map = new maplibregl.Map({
+  container: "map",
+  style: {
+    version: 8,
+    sources: { osm: { type: "raster", tileSize: 256,
+      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+      attribution: "© OpenStreetMap contributors" } },
+    layers: [{ id: "osm", type: "raster", source: "osm" }],
+  },
+  center: [-79.8, 37.3], zoom: 6,
+});
+map.addControl(new maplibregl.NavigationControl(), "top-right");
+
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") node.className = v; else if (k === "style") node.style.cssText = v;
+    else node.setAttribute(k, v);
+  }
+  for (const c of children) if (c != null) node.append(c);  // text via append: no HTML injection
+  return node;
+}
+const money = n => "$" + Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
+const hours = m => `${Math.floor(m / 60)} h ${String(Math.round(m % 60)).padStart(2, "0")}`;
+
+$("examples").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  $("text").value = b.dataset.t; $("vehicle").value = b.dataset.v;
+});
+
+$("form").addEventListener("submit", e => {
+  e.preventDefault();
+  const body = { text: $("text").value, vehicle: $("vehicle").value,
+                 max_drive_minutes: Number($("maxdrive").value) };
+  if ($("budget").value) body.budget_usd = Number($("budget").value);
+  run(body);
+});
+
+async function run(body) {
+  request = body;
+  setBusy(true);
+  $("progress").replaceChildren(); $("progress").classList.remove("done");
+  if (!body.previous_plan) $("result").replaceChildren();
+  try {
+    const resp = await fetch("/api/plan", { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.message || `Request failed (${resp.status})`);
+    }
+    const reader = resp.body.getReader(); const decoder = new TextDecoder(); let buf = "";
+    for (;;) {
+      const { value, done } = await reader.read(); if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf("\n\n")) >= 0) {
+        const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+        if (chunk.startsWith("data: ")) handle(JSON.parse(chunk.slice(6)));
+      }
+    }
+  } catch (err) {
+    showError(err.message);
+  } finally { setBusy(false); }
+}
+
+function handle(ev) {
+  if (ev.type === "progress") $("progress").append(el("li", {}, ev.message));
+  else if (ev.type === "plan") { $("progress").classList.add("done"); current = ev; render(ev); }
+  else if (ev.type === "error") {
+    const detail = (ev.violations || []).slice(0, 3).map(v => v.message).join("; ");
+    showError(`${ev.message || ev.error}${detail ? " (" + detail + ")" : ""}`);
+  }
+}
+
+function showError(msg) { $("result").prepend(el("div", { class: "error" }, msg)); }
+function setBusy(b) { document.querySelectorAll("button").forEach(x => x.disabled = b); }
+
+function render({ plan, places }) {
+  const t = plan.totals, out = $("result");
+  out.replaceChildren(
+    el("p", { class: "summary" }, plan.summary),
+    el("div", { class: "totals" },
+      el("div", { class: "stat" }, el("b", {}, money(t.cash_usd)), el("span", {}, "lodging, cash")),
+      el("div", { class: "stat" }, el("b", {}, t.points.toLocaleString()), el("span", {}, "points (hotel nights)")),
+      el("div", { class: "stat" }, el("b", {}, `${t.hotel_nights} + ${t.host_nights}`), el("span", {}, "hotel + host nights"))),
+    ...plan.warnings.map(w => el("div", { class: "warn" }, "⚠ " + w)),
+    ...plan.alternatives.map(a => el("div", { class: "warn" }, "→ " + a)),
+    ...plan.days.map(d => dayCard(d, places)),
+    replanBox(plan),
+  );
+  drawMap(current);
+}
+
+function dayCard(d, places) {
+  const color = DAY_COLORS[(d.day - 1) % DAY_COLORS.length];
+  const card = el("div", { class: "day", style: `--c:${color}` },
+    el("h3", {}, `Day ${d.day}`, el("small", {}, `${hours(d.drive_minutes)} · ${Math.round(d.distance_km)} km`)),
+    el("p", {}, d.narrative));
+  for (const s of d.stops) {
+    const p = places[s.id] || { name: s.id };
+    const cost = p.est_cost_usd ? ` · about ${money(p.est_cost_usd)}` : "";
+    card.append(el("div", { class: "item" }, el("span", { class: "pill" }, s.type),
+      el("div", {}, el("b", {}, p.name), el("div", { class: "muted" }, s.reason + cost))));
+  }
+  if (d.overnight) {
+    const o = d.overnight, p = places[o.id] || { name: o.id };
+    const price = o.kind === "hotel"
+      ? `${money(p.price_usd)} or ${Number(p.points_per_night).toLocaleString()} pts`
+      : `${money(p.est_cost_usd)} RV stay`;
+    card.append(el("div", { class: "item" }, el("span", { class: `pill ${o.kind}` }, o.kind === "hotel" ? "hotel" : "host"),
+      el("div", {}, el("b", {}, p.name), el("div", { class: "muted" }, `${price} · ${o.reason}`))));
+  } else {
+    card.append(el("div", { class: "muted" }, `Arrive in ${current ? current.plan.destination : ""}`));
+  }
+  return card;
+}
+
+function replanBox(plan) {
+  const from = el("select", { id: "fromday", style: "width:auto" },
+    ...plan.days.slice(1).map(d => el("option", { value: d.day }, `from day ${d.day}`)));
+  const go = (label, extra) => {
+    const b = el("button", { type: "button", class: "ghost" }, label);
+    b.onclick = () => run({ ...request, ...extra(), previous_plan: plan,
+                            replan_from_day: Number(from.value) });
+    return b;
+  };
+  return el("div", { class: "replan" }, el("b", {}, "Adjust the plan "), from,
+    el("div", { class: "btns" },
+      go("Cheaper", () => ({ text: "Make it cheaper.",
+        budget_usd: Math.max(1, Math.floor(plan.totals.cash_usd * 0.85)) })),
+      go("Shorter days", () => ({ text: "Shorter driving days.",
+        max_drive_minutes: Math.max(120, Math.min(request.max_drive_minutes || 300, 300) - 60) })),
+      go("More outdoors", () => ({ text: "More outdoors: more farms and wineries, fewer museums." }))));
+}
+
+function drawMap({ plan, places, route_geojson }) {
+  const paint = () => {
+    if (map.getLayer("route")) map.removeLayer("route");
+    if (map.getSource("route")) map.removeSource("route");
+    map.addSource("route", { type: "geojson", data: route_geojson });
+    map.addLayer({ id: "route", type: "line", source: "route",
+      layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-width": 5, "line-opacity": 0.85, "line-color": ["match", ["get", "day"],
+        ...DAY_COLORS.flatMap((c, i) => [i + 1, c]), DAY_COLORS[0]] } });
+    markers.forEach(m => m.remove()); markers = [];
+    for (const d of plan.days) {
+      const items = [...d.stops.map(s => [s.id, "stop"]),
+                     ...(d.overnight ? [[d.overnight.id, d.overnight.kind]] : [])];
+      for (const [id, kind] of items) {
+        const p = places[id]; if (!p) continue;
+        const dot = el("div", { style: `width:${kind === "stop" ? 12 : 18}px;height:${kind === "stop" ? 12 : 18}px;` +
+          `border-radius:${kind === "hotel" ? "4px" : "50%"};border:2px solid #fff;box-shadow:0 1px 3px #0006;` +
+          `background:${DAY_COLORS[(d.day - 1) % DAY_COLORS.length]}` });
+        const popup = new maplibregl.Popup({ offset: 12 }).setDOMContent(
+          el("div", {}, el("b", {}, p.name), el("div", {}, `Day ${d.day} · ${kind}`)));
+        markers.push(new maplibregl.Marker({ element: dot }).setLngLat([p.lon, p.lat]).setPopup(popup).addTo(map));
+      }
+    }
+    const coords = route_geojson.features.flatMap(f => f.geometry.coordinates);
+    if (coords.length) {
+      const b = coords.reduce((bb, c) => bb.extend(c), new maplibregl.LngLatBounds(coords[0], coords[0]));
+      map.fitBounds(b, { padding: 50, duration: 600 });
+    }
+  };
+  map.loaded() ? paint() : map.once("load", paint);
+}
+</script>
+</body>
+</html>
