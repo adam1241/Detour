@@ -62,7 +62,7 @@ def _schema_validator() -> Draft202012Validator:
     return Draft202012Validator(json.loads(SCHEMA_FILE.read_text(encoding="utf-8")))
 
 
-def _schema_violations(plan: object) -> list[Violation]:
+def schema_violations(plan: object) -> list[Violation]:
     if not isinstance(plan, dict):
         return [Violation("schema", "plan must be a JSON object")]
     errors = sorted(_schema_validator().iter_errors(plan), key=lambda e: list(map(str, e.path)))
@@ -106,6 +106,56 @@ def _off(actual: float, expected: float, absolute: float, pct: float) -> bool:
 
 def _side_trip_km(point: Sequence[float]) -> float:
     return distance_from_route_km(point) * SIDE_TRIP_ROAD_FACTOR
+
+
+@dataclass(frozen=True)
+class Leg:
+    """One day's driving: get_route between its ends plus estimated side trips."""
+
+    corridor_min: float
+    corridor_km: float
+    side_min: float
+    side_km: float
+
+    @property
+    def minutes(self) -> float:
+        return self.corridor_min + self.side_min
+
+    @property
+    def km(self) -> float:
+        return self.corridor_km + self.side_km
+
+
+def measure_leg(start: RoutePlace, end: RoutePlace, stop_points: Sequence[Sequence[float]]) -> Leg:
+    """Drive time and distance for a day from `start` to `end` visiting off-route stops.
+
+    Raises RouteError when an end is off the corridor.
+    """
+    corridor_min, corridor_km = _route(start, end)
+    side_km = sum(2 * _side_trip_km(p) for p in stop_points)
+    side_km += sum(_side_trip_km(list(p)) for p in (start, end) if not isinstance(p, str))
+    return Leg(corridor_min, corridor_km, side_km * 60 / SIDE_TRIP_KMH, side_km)
+
+
+def day_ends(plan: dict[str, Any], places: dict[str, Place]) -> list[RoutePlace] | None:
+    """Where each day ends: the overnight's point, or the destination on the last day.
+    None if an overnight isn't a known place of its kind."""
+    ends: list[RoutePlace] = []
+    for d in plan["days"]:
+        if d["overnight"] is None:
+            ends.append(plan["destination"])
+            continue
+        kind = "hotel" if d["overnight"]["kind"] == "hotel" else "stop"
+        point = _known_point(places, d["overnight"]["id"], kind)
+        if point is None:
+            return None
+        ends.append(point)
+    return ends
+
+
+def stop_points(day: dict[str, Any], places: dict[str, Place]) -> list[list[float]]:
+    """Points of a day's known stops (unknown ones are reported by grounding)."""
+    return [p for s in day["stops"] if (p := _known_point(places, s["id"], "stop"))]
 
 
 def _grounding(
@@ -168,29 +218,21 @@ def _routing(
     out: list[Violation] = []
     origin, destination = plan["origin"], plan["destination"]
     days = plan["days"]
-    ends: list[list[float] | str] = []
-    for d in days:
-        if d["overnight"] is None:
-            ends.append(destination)
-            continue
-        kind = "hotel" if d["overnight"]["kind"] == "hotel" else "stop"
-        point = _known_point(places, d["overnight"]["id"], kind)
-        if point is None:
-            return out
-        ends.append(point)
+    found = day_ends(plan, places)
+    if found is None:
+        return out
+    ends = found
 
     start: RoutePlace = origin
     for d, end in zip(days, ends, strict=True):
         n = d["day"]
         try:
-            corridor_min, corridor_km = _route(start, end)
+            leg = measure_leg(start, end, stop_points(d, places))
         except RouteError as err:
             return [*out, Violation("route_error", err.message, n)]
-        stop_points = [p for s in d["stops"] if (p := _known_point(places, s["id"], "stop"))]
-        side_km = sum(2 * _side_trip_km(p) for p in stop_points)
-        side_km += sum(_side_trip_km(list(p)) for p in (start, end) if not isinstance(p, str))
-        side_min = side_km * 60 / SIDE_TRIP_KMH
-        minutes, km = corridor_min + side_min, corridor_km + side_km
+        corridor_min, corridor_km = leg.corridor_min, leg.corridor_km
+        side_min, side_km = leg.side_min, leg.side_km
+        minutes, km = leg.minutes, leg.km
         basis = f"get_route says {corridor_min:.0f} min + {side_min:.0f} min of side trips"
         if _off(d["drive_minutes"], minutes, DRIVE_TOLERANCE_MIN, DRIVE_TOLERANCE_PCT):
             out.append(
@@ -225,7 +267,9 @@ def _routing(
     slack = max(SEGMENT_TOLERANCE_KM, SEGMENT_TOLERANCE_PCT * total_km)
     last_km, last_label = 0.0, str(origin)
     for d, end in zip(days, ends, strict=True):
-        sequence = [(s["id"], _known_point(places, s["id"], "stop")) for s in d["stops"]]
+        sequence: list[tuple[str, Sequence[float] | None]] = [
+            (s["id"], _known_point(places, s["id"], "stop")) for s in d["stops"]
+        ]
         if d["overnight"] is not None:
             sequence.append((d["overnight"]["id"], end if not isinstance(end, str) else None))
         for label, point in sequence:
@@ -293,7 +337,7 @@ def validate_plan(
     `allowed_ids`: the place IDs tools returned during this run. When given, any other ID is a
     `not_from_tools` violation even if it exists in the catalog (spec §5.1).
     """
-    schema_errors = _schema_violations(plan)
+    schema_errors = schema_violations(plan)
     if schema_errors:
         return schema_errors
 

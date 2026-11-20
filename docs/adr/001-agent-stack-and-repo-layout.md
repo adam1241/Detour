@@ -1,6 +1,6 @@
 # ADR-001: Agent stack and repo layout
 
-- **Status:** Accepted by Adam, 2026-11-17
+- **Status:** Accepted by Adam, 2026-11-17. Framework amended by [ADR-007](007-agent-loop-bedrock-converse.md) (2026-11-20): own loop on the Bedrock Converse API instead of Strands.
 - **Spec refs:** §5.3, §7, §9, §10 (Day 2 cut-line)
 
 ## Context
