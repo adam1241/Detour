@@ -5,6 +5,7 @@ description = "Detour: AI road-trip planner mixing hotel nights with host-style 
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "boto3>=1.40",
     "jsonschema>=4.23",
     "psycopg[binary]>=3.2",
     "pyyaml>=6.0",
@@ -43,5 +44,5 @@ addopts = "-ra --strict-markers"
 
 [[tool.mypy.overrides]]
 # jsonschema and PyYAML ship no type hints; avoids adding stub packages.
-module = ["jsonschema", "jsonschema.*", "yaml"]
+module = ["boto3", "boto3.*", "botocore", "botocore.*", "jsonschema", "jsonschema.*", "yaml"]
 ignore_missing_imports = true
