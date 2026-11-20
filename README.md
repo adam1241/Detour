@@ -20,6 +20,18 @@ In 2026 Choice Hotels agreed to acquire Harvest Hosts, an RV network of 11,200+ 
 
 Sources: [`docs/context-sources.md`](docs/context-sources.md).
 
+## Run the demo
+```
+uv sync
+uv run python -m agent.server --sample      # no AWS: replays a validated sample plan
+```
+Open http://127.0.0.1:8000. For live plans from Claude on Bedrock (ADR-007):
+```
+DETOUR_MODEL_ID=<bedrock model or inference-profile id> AWS_PROFILE=detour AWS_REGION=us-east-1   uv run python -m agent.server
+```
+With `DATABASE_URL` set, searches use PostGIS and every run is saved to `trips`; without it,
+the seed CSVs are searched in memory. Rate limit: 10 plans per IP per hour.
+
 ## Docs
 
 - [Spec (v0.3)](docs/spec.md): source of truth

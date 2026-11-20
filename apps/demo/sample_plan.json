@@ -1,0 +1,97 @@
+{
+  "trip_id": "sample-rv-dc-asheville",
+  "summary": "Four relaxed days from DC to Asheville in an RV, mixing farm stays with one hotel night in Roanoke.",
+  "origin": "Washington, DC",
+  "destination": "Asheville, NC",
+  "vehicle": "rv",
+  "days": [
+    {
+      "day": 1,
+      "stops": [
+        {
+          "id": "stop_linden_vineyards",
+          "type": "winery",
+          "reason": "A hillside vineyard right off the route."
+        },
+        {
+          "id": "stop_car_carriage_caravan_museum",
+          "type": "museum",
+          "reason": "An easy leg-stretch at Luray Caverns."
+        }
+      ],
+      "overnight": {
+        "kind": "host",
+        "id": "stop_dices_spring_farm",
+        "reason_code": "drive_time",
+        "reason": "The farm sits just past Staunton, a comfortable first day."
+      },
+      "narrative": "Leave DC early and climb into the Blue Ridge foothills. Taste wine at Linden and wander the car museum at Luray. Park the RV at Dices Spring Farm.",
+      "drive_minutes": 182.6,
+      "distance_km": 222.5
+    },
+    {
+      "day": 2,
+      "stops": [
+        {
+          "id": "stop_barren_ridge_vineyards",
+          "type": "winery",
+          "reason": "A valley winery a few minutes from last night's farm."
+        },
+        {
+          "id": "stop_frontier_culture_museum",
+          "type": "museum",
+          "reason": "Outdoor farm exhibits just down the road."
+        }
+      ],
+      "overnight": {
+        "kind": "hotel",
+        "id": "hotel_quality_inn_roanoke_airport",
+        "reason_code": "budget",
+        "reason": "A well-priced hotel night in Roanoke before the long Parkway day."
+      },
+      "narrative": "Start with a tasting at Barren Ridge, then the Frontier Culture Museum near Staunton. Roll south to Roanoke and sleep in a real bed tonight.",
+      "drive_minutes": 138.0,
+      "distance_km": 175.4
+    },
+    {
+      "day": 3,
+      "stops": [],
+      "overnight": {
+        "kind": "host",
+        "id": "stop_shipley_farms",
+        "reason_code": "drive_time",
+        "reason": "Shipley Farms near Boone breaks the longest leg of the trip."
+      },
+      "narrative": "Today is the longest drive, into the North Carolina high country. Take it slow and reach Shipley Farms by late afternoon.",
+      "drive_minutes": 213.7,
+      "distance_km": 277.6
+    },
+    {
+      "day": 4,
+      "stops": [
+        {
+          "id": "stop_hickory_ridge_museum",
+          "type": "museum",
+          "reason": "Living history in Boone on the way out."
+        },
+        {
+          "id": "stop_asheville_art_museum",
+          "type": "museum",
+          "reason": "A downtown finish in Asheville."
+        }
+      ],
+      "overnight": null,
+      "narrative": "Visit the Hickory Ridge History Museum before heading south. Drive the last stretch and end at the Asheville Art Museum downtown.",
+      "drive_minutes": 137.6,
+      "distance_km": 150.1
+    }
+  ],
+  "warnings": [],
+  "alternatives": [],
+  "totals": {
+    "cash_usd": 155.0,
+    "points": 10000,
+    "hotel_nights": 1,
+    "host_nights": 2
+  }
+}
