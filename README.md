@@ -42,6 +42,64 @@ the seed CSVs are searched in memory. Rate limit: 10 plans per IP per hour.
 
 ## How this was built
 
-_Filled in on Day 4: pipeline diagram, example PRs (including human overrides of AI suggestions), eval history and an AI-usage note._
+Detour was built in 4 days by Adam working with Claude Code as the coding agent, under the
+rules in [CLAUDE.md](CLAUDE.md): plan before code, one small branch per change, tests first
+for deterministic logic, an ADR for every decision, and Adam decides and merges.
+
+### Pipeline
+```mermaid
+flowchart LR
+  A[Adam: request] --> B[Claude Code: plan<br/>files, tests, risks]
+  B -->|Adam approves| C[Branch + failing tests]
+  C --> D[Code until green]
+  D --> E[Local checks<br/>ruff, mypy, pytest,<br/>gitleaks via pre-commit]
+  E --> F[Pull request<br/>What / Why / How tested /<br/>Eval delta / Risks]
+  F --> G[CI: lint-test, spatial<br/>PostGIS, secrets]
+  F --> H[AI review: OpenAI Codex<br/>+ Sourcery, advisory]
+  H -->|fix or reply| D
+  G --> I{Adam reviews<br/>and merges}
+  I --> J[main]
+```
+
+Guardrails that ran on every change:
+- **Claude Code hooks** (`.claude/settings.json`): block edits to `.env*` and to migrations
+  already on `main`; run the unit tests after every edit under `agent/`.
+- **Branch protection** on `main`: pull requests only; `lint-test`, `spatial` and `secrets`
+  must pass; no force pushes.
+- **AI review** on `pull_request_target` with a trusted-base checkout, a read-only sandbox and
+  a pinned action ([ADR-004](docs/adr/004-evals-merge-gate-and-tracing.md)).
+
+### What the agent can and can't do
+The planner (Claude on Bedrock, [ADR-007](docs/adr/007-agent-loop-bedrock-converse.md)) only
+chooses places from tool results and writes the words. Drive times, distances and costs are
+filled in by code from the same functions `validate_plan` checks, and a plan is returned only
+after `validate_plan` passes, with every ID checked against the IDs the tools returned in that
+run. The eval suite (20 cases, `evals/`) gates schema and grounding at 100% and the travel
+rules at 95%.
+
+### Decisions where Adam overrode or redirected the AI
+- **Data realism over convenience.** Prices were sampled one hotel at a time from the
+  brand's public search for a single night, not estimated. RV host stops come from each
+  host's own site or Hipcamp listing; Harvest Hosts listings were ruled out.
+- **AI reviewer.** The ADR drafted a Claude-based reviewer; Adam chose OpenAI Codex
+  (spec v0.3).
+- **Agent framework.** ADR-001 chose Strands; on the final day Adam chose a small
+  Converse loop that can be tested offline (ADR-007).
+- **Scope cuts** (spec v0.4): no AgentCore and no Vercel deploy; a local demo page instead.
+
+### Examples from the PR history
+- [#10](https://github.com/adam1241/Detour/pull/10) `validate_plan`: written tests-first; review
+  rounds added per-violation acknowledgement and exact totals.
+- [#11](https://github.com/adam1241/Detour/pull/11) evals: a follow-up commit closed gaps
+  reviewers found (vehicle, structure, answering the request that was actually asked).
+- [#8](https://github.com/adam1241/Detour/pull/8) and
+  [#13](https://github.com/adam1241/Detour/pull/13) were merged into a stacked branch instead of
+  `main`; #9 and #14 re-landed them. Stacked PRs are no longer used.
+
+### Not done yet (honest status)
+- Evals don't run in CI yet: the runner works locally (`python -m evals.runner`), and the
+  baseline `evals/results/main.json` is recorded after the first live run.
+- Cost per plan isn't tracked until the Bedrock price for the model is confirmed.
+
 
 **Merge process, stated openly:** branch protection requires pull requests and passing status checks (CI, plus evals when the agent, prompts or evals change), but **not** an approving review. GitHub doesn't let a PR author approve their own PR, and Adam is the only human on the project. Adam is the only one who merges and leaves a written review comment on every PR. The AI code review (OpenAI Codex) is advisory. See [ADR-004](docs/adr/004-evals-merge-gate-and-tracing.md).
