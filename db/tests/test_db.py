@@ -190,7 +190,7 @@ def test_ridb_stop_without_cost_is_accepted(conn: psycopg.Connection) -> None:
     apply_migrations(conn, MIGRATIONS_DIR)
     conn.execute(
         "INSERT INTO stops (id, name, type, geom, overnight_ok, est_cost_usd, source, source_url, "
-        "source_ref, licence) VALUES ('stop_ridb_1', 'X', 'farm', "
+        "source_ref, licence) VALUES ('stop_ridb_1', 'X', 'campground', "
         "ST_SetSRID(ST_MakePoint(-105.5, 40.3), 4326), true, NULL, 'ridb', "
         "'https://www.recreation.gov/camping/campgrounds/1', 'ridb:facility/1', 'US-PD')"
     )

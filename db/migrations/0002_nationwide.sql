@@ -40,6 +40,11 @@ ALTER TABLE stops
     ADD COLUMN licence text;
 
 ALTER TABLE stops DROP CONSTRAINT stops_source_check;
+-- RIDB federal campgrounds are RV overnights (ADR-008).
+ALTER TABLE stops DROP CONSTRAINT stops_type_check;
+ALTER TABLE stops
+    ADD CONSTRAINT stops_type_check
+        CHECK (type IN ('winery', 'farm', 'brewery', 'museum', 'campground'));
 ALTER TABLE stops
     ADD CONSTRAINT stops_source_check
         CHECK (source IN ('sample_public', 'test_fixture', 'osm', 'ridb')),

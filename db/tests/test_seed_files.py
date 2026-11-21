@@ -184,6 +184,10 @@ def test_bad_osm_hotel_rejected(change: dict[str, Any], message: str) -> None:
     assert any(message in e for e in errors), errors
 
 
+def test_ridb_campground_type_passes() -> None:
+    assert validate([], [ridb_stop(type="campground")]) == []
+
+
 def test_ridb_stop_with_a_cost_is_rejected() -> None:
     errors = validate([], [ridb_stop(est_cost_usd=Decimal("20"))])
     assert any("prices only come from a fetched page" in e for e in errors), errors

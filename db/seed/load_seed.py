@@ -28,7 +28,7 @@ FIXTURE_DIR = SEED_DIR / "fixtures"
 # Contiguous US (ADR-008). Alaska, Hawaii and territories are out of scope.
 US_BBOX = {"min_lon": -125.0, "max_lon": -66.9, "min_lat": 24.4, "max_lat": 49.4}
 BRAND_SEGMENTS = {"economy", "midscale", "upscale"}
-STOP_TYPES = {"winery", "farm", "brewery", "museum"}
+STOP_TYPES = {"winery", "farm", "brewery", "museum", "campground"}  # campground: RIDB
 HAND_SOURCED = {"sample_public", "test_fixture"}  # prices from a fetched page
 LICENCES = {"osm": "ODbL-1.0", "ridb": "US-PD"}  # imported sources and their licence
 SOURCES = HAND_SOURCED | set(LICENCES)
