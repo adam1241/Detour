@@ -234,7 +234,7 @@ def test_trace_records_tool_calls_and_tokens() -> None:
     assert [t["tool"] for t in result.trace] == ["find_hotels_near", "validate_plan"]
     assert all(t["ok"] and t["latency_ms"] >= 0 for t in result.trace)
     assert result.usage == {"input_tokens": 200, "output_tokens": 100}
-    assert result.model == "fake-model" and result.prompt_version == "planner.v1"
+    assert result.model == "fake-model" and result.prompt_version == "planner.v2"
 
 
 def test_request_vehicle_wins_over_the_drafted_one() -> None:
@@ -322,3 +322,27 @@ def test_bedrock_client_needs_a_model_id(monkeypatch: pytest.MonkeyPatch) -> Non
 def test_progress_text_pluralizes_stop_types() -> None:
     text = _progress_text("find_stops_along_route", {"types": ["winery", "farm", "brewery"]})
     assert text == "Looking for wineries, farms, breweries along the way"
+
+
+def over_limit_plan() -> dict[str, Any]:
+    """luray_plan with warnings and an alternative that acknowledge driving over a 60 min cap."""
+    return luray_plan(
+        warnings=["Day 1 driving is over your limit.", "Day 2 driving is over your limit."],
+        alternatives=["Add a day to shorten the driving."],
+    )
+
+
+def test_an_acknowledged_broken_limit_is_challenged_once_then_accepted() -> None:
+    def challenged(messages: list[dict[str, Any]]) -> dict[str, Any]:
+        (result,) = tool_results(messages)
+        body = result["content"][0]["json"]
+        assert body["valid"] is False and body["needs_confirmation"] is True
+        assert {v["code"] for v in body["violations"]} == {"max_drive"}
+        return tool("validate_plan", {"plan": over_limit_plan()}, "v2")
+
+    result, model = run(
+        [HOTELS_NEAR_LURAY, tool("validate_plan", {"plan": over_limit_plan()}, "v1"), challenged],
+        request(max_drive_minutes=60),
+    )
+    assert result.error is None and len(model.calls) == 3
+    assert {v["code"] for v in result.acknowledged} == {"max_drive"}

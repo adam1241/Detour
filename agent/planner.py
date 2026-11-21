@@ -24,7 +24,7 @@ from agent.tools.registry import Spatial, ToolBox, timed_call, tool_specs
 
 __all__ = ["MAX_TURNS", "PlanResult", "TripRequest", "plan_for_eval", "plan_trip"]
 
-PROMPT_VERSION = "planner.v1"
+PROMPT_VERSION = "planner.v2"
 PROMPT_FILE = Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.md"
 MAX_TURNS = 12  # model calls per run
 MAX_VALIDATIONS = 4  # first draft + 3 repair rounds
@@ -42,6 +42,7 @@ class PlanResult:
     plan: dict[str, Any] | None
     error: str | None = None  # turn_limit | plan_invalid | no_plan
     violations: list[dict[str, Any]] = field(default_factory=list)
+    acknowledged: list[dict[str, Any]] = field(default_factory=list)  # limits a warning names
     allowed_ids: set[str] = field(default_factory=set)
     trace: list[dict[str, Any]] = field(default_factory=list)
     usage: dict[str, int] = field(default_factory=lambda: {"input_tokens": 0, "output_tokens": 0})
@@ -127,6 +128,7 @@ def plan_trip(
         result.error = error
         result.allowed_ids = set(box.allowed_ids)
         result.violations = [] if error is None else box.last_violations
+        result.acknowledged = box.acknowledged
         result.latency_s = time.perf_counter() - started
         cost = getattr(model, "cost_usd", None)
         result.cost_usd = cost(result.usage) if callable(cost) else None
