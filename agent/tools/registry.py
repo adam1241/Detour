@@ -357,16 +357,6 @@ class ToolBox:
             "daily_limit_minutes": self.request.max_drive_minutes,
         }
         hint = self._drive_hint(plan, violations)
-        if hint is not None:
-            # The trip fits the daily limit on average, so a long day is fixable: never excuse it.
-            return {
-                "valid": False,
-                "violations": [
-                    v.to_dict() for v in violations if v.code == "max_drive" or not v.acknowledged
-                ],
-                "computed": computed,
-                "hint": hint,
-            }
         if not blocking(violations):
             if violations and not self.challenged:
                 # A warning only excuses a limit that truly can't be met: ask once for a fix.
@@ -383,6 +373,7 @@ class ToolBox:
                     "keep every day within the limits, fix it and call validate_plan again. If "
                     "it is truly impossible with the days and budget requested, call "
                     "validate_plan again with this same plan. Do not reply in text.",
+                    **({"hint": hint} if hint else {}),
                 }
             self.accept(plan)
             return {"valid": True, "acknowledged": self.last_violations}
@@ -393,8 +384,9 @@ class ToolBox:
         }
 
     def _drive_hint(self, plan: dict[str, Any], violations: list[Any]) -> str | None:
-        """A hint when a max_drive violation is fixable: the route left to plan (from the
-        replanned day on) fits the daily limit on average. None otherwise."""
+        """A hint for the challenge when a max_drive violation looks fixable: the route left to
+        plan (from the replanned day on) fits the daily limit on average. Only a hint: where
+        places exist (e.g. RV hosts) can still make a long day unavoidable. None otherwise."""
         if not any(v.code == "max_drive" for v in violations):
             return None
         days = plan["days"]
