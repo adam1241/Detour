@@ -6,7 +6,7 @@ prices. Roughly 6 PRs, each under ~400 lines of code (data files excluded), in t
 
 ## What Adam needs to decide or do first
 1. ~~Accept ADR-008~~ (accepted 2026-11-21).
-2. Approve the schema migration `0002` and the import dependency (`pyosmium` or the `osmium` tool).
+2. ~~Approve migration `0002` and the import dependency~~ (approved 2026-11-21; the import ended up needing no new dependency).
 3. Create two free keys and put them in `.env` (and later in the `evals` environment):
    `ORS_API_KEY` (openrouteservice.org) and `RIDB_API_KEY` (ridb.recreation.gov).
 

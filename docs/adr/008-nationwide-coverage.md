@@ -81,3 +81,11 @@ second, plus the import's own place index for corridor-style town names.
 - **Spec v0.7:** §1 scope, §5 rules for unpriced nights, §6.1 sourcing (OSM/RIDB allowed for
   locations; prices still only from a fetched page).
 - **Effort:** about 6 PRs over 3 to 4 working days ([plan](../plans/nationwide.md)).
+
+## Implementation notes (2026-11-21)
+- **Import via Overpass, not a PBF extract.** The Choice brands and four stop kinds are a small
+  slice of OSM, so one Overpass query per state and kind (about 100 per full run) replaces
+  downloading the roughly 10 GB US extract. No `pyosmium` dependency is needed after all.
+- **`campground` stop type** added in migration `0002` for RIDB campgrounds.
+- Importers live in `db/seed/` (`import_osm.py`, `import_ridb.py`) and write git-ignored CSVs.
+
