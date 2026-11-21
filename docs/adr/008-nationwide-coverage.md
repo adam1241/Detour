@@ -1,6 +1,6 @@
 # ADR-008: Nationwide coverage (data, routing, geocoding)
 
-- **Status:** Proposed, 2026-11-21. Adam decides; nothing is built until this is accepted.
+- **Status:** Accepted by Adam, 2026-11-21.
 - **Spec refs:** §1 (one corridor), §5.1 (never invent places or prices), §5.3 tools, §6.1 sourcing rules, §8 evals
 - **Plan:** [docs/plans/nationwide.md](../plans/nationwide.md)
 
@@ -46,7 +46,7 @@ facilities only. OSM `tourism=caravan_site` adds private RV parks, mostly withou
 Public **Nominatim** (OSM), cached, with an identifying User-Agent and at most one request per
 second, plus the import's own place index for corridor-style town names.
 
-## Decision (proposed)
+## Decision
 
 1. **Places: A (OpenStreetMap import) + RIDB campgrounds.** Real names and locations
    nationwide. Each row records its source (`osm` or `ridb`), its OSM or RIDB id, and its licence.

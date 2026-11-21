@@ -1,11 +1,11 @@
 # Plan: nationwide coverage
 
-Status: **proposal**, waiting for Adam's decision on [ADR-008](../adr/008-nationwide-coverage.md).
+Status: **accepted** ([ADR-008](../adr/008-nationwide-coverage.md), 2026-11-21). Next: PR 2.
 Goal: plan a trip between any two US places, using real hotels and stops, without inventing
 prices. Roughly 6 PRs, each under ~400 lines of code (data files excluded), in this order.
 
 ## What Adam needs to decide or do first
-1. Accept, change or reject ADR-008 (data source, price policy, routing provider).
+1. ~~Accept ADR-008~~ (accepted 2026-11-21).
 2. Approve the schema migration `0002` and the import dependency (`pyosmium` or the `osmium` tool).
 3. Create two free keys and put them in `.env` (and later in the `evals` environment):
    `ORS_API_KEY` (openrouteservice.org) and `RIDB_API_KEY` (ridb.recreation.gov).
