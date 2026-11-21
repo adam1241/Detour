@@ -358,3 +358,13 @@ def test_an_acknowledged_broken_limit_is_challenged_once_then_accepted() -> None
     )
     assert result.error is None and len(model.calls) == 3
     assert {v["code"] for v in result.acknowledged} == {"max_drive"}
+
+
+def test_a_plan_fixed_on_the_fifth_validation_is_accepted() -> None:
+    """Draft + 3 repairs + 1 more: room for a challenged limit to still end in a warning."""
+    bad = luray_plan(destination="Chicago")
+    invalid = [tool("validate_plan", {"plan": bad}, f"v{i}") for i in range(4)]
+    result, _ = run(
+        [HOTELS_NEAR_LURAY, *invalid, tool("validate_plan", {"plan": luray_plan()}, "ok")]
+    )
+    assert result.error is None

@@ -110,6 +110,7 @@ const $ = id => document.getElementById(id);
 let current = null;  // last hydrated response: {plan, places, route_geojson}
 let request = null;  // last request body
 let markers = [];
+let cheaperThan = null;  // cash total a "Cheaper" replan must beat
 
 const map = new maplibregl.Map({
   container: "map",
@@ -151,6 +152,7 @@ $("form").addEventListener("submit", e => {
 
 async function run(body) {
   request = body;
+  if (!body.previous_plan) cheaperThan = null;
   setBusy(true);
   $("progress").replaceChildren(); $("progress").classList.remove("done");
   if (!body.previous_plan) $("result").replaceChildren();
@@ -178,7 +180,13 @@ async function run(body) {
 
 function handle(ev) {
   if (ev.type === "progress") $("progress").append(el("li", {}, ev.message));
-  else if (ev.type === "plan") { $("progress").classList.add("done"); current = ev; render(ev); }
+  else if (ev.type === "plan") {
+    $("progress").classList.add("done"); current = ev; render(ev);
+    if (cheaperThan !== null && ev.plan.totals.cash_usd >= cheaperThan) {
+      $("result").prepend(el("div", { class: "warn" },
+        `No cheaper option was found in the sample data; lodging stays at ${money(ev.plan.totals.cash_usd)}.`));
+    }
+  }
   else if (ev.type === "error") {
     const detail = (ev.violations || []).slice(0, 3).map(v => v.message).join("; ");
     showError(`${ev.message || ev.error}${detail ? " (" + detail + ")" : ""}`);
@@ -230,17 +238,20 @@ function dayCard(d, places) {
 
 function replanBox(plan) {
   const from = el("select", { id: "fromday", style: "width:auto" },
-    ...plan.days.slice(1).map(d => el("option", { value: d.day }, `from day ${d.day}`)));
+    ...plan.days.map(d => el("option", { value: d.day }, `from day ${d.day}`)));
   const go = (label, extra) => {
     const b = el("button", { type: "button", class: "ghost" }, label);
-    b.onclick = () => run({ ...request, ...extra(), previous_plan: plan,
-                            replan_from_day: Number(from.value) });
+    b.onclick = () => {
+      cheaperThan = label === "Cheaper" ? plan.totals.cash_usd : null;
+      run({ ...request, ...extra(), previous_plan: plan, replan_from_day: Number(from.value) });
+    };
     return b;
   };
   return el("div", { class: "replan" }, el("b", {}, "Adjust the plan "), from,
     el("div", { class: "btns" },
-      go("Cheaper", () => ({ text: "Make it cheaper.",
-        budget_usd: Math.max(1, Math.floor(plan.totals.cash_usd * 0.85)) })),
+      // Soft request: a cheaper plan if one exists, otherwise the same plan with a note.
+      go("Cheaper", () => ({ text: `Make it cheaper: lodging under ${money(plan.totals.cash_usd)} ` +
+        "if possible. If nothing cheaper exists, keep the plan and add a warning saying so." })),
       go("Shorter days", () => ({ text: "Shorter driving days.",
         max_drive_minutes: Math.max(120, Math.min(request.max_drive_minutes || 300, 300) - 60) })),
       go("More outdoors", () => ({ text: "More outdoors: more farms and wineries, fewer museums." }))));
