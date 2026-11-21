@@ -86,7 +86,8 @@ def _progress_text(name: str, args: dict[str, Any]) -> str:
             args.get("destination")
         )
     if name == "find_stops_along_route":
-        kinds = ", ".join(f"{t}s" for t in args.get("types") or []) or "stops"
+        plural = {"winery": "wineries", "brewery": "breweries"}
+        kinds = ", ".join(plural.get(t, f"{t}s") for t in args.get("types") or []) or "stops"
         return f"Looking for {kinds} along the way"
     if name == "find_hotels_near":
         return f"Looking for hotels near {place(args.get('near'))}"

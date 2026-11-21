@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from agent.llm import BedrockClient
-from agent.planner import MAX_TURNS, TripRequest, plan_trip
+from agent.planner import MAX_TURNS, TripRequest, _progress_text, plan_trip
 from agent.tools.registry import MemorySpatial, ToolBox, tool_specs
 from evals.catalog import seed_catalog
 
@@ -317,3 +317,8 @@ def test_bedrock_client_needs_a_model_id(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.delenv("DETOUR_MODEL_ID", raising=False)
     with pytest.raises(ValueError, match="DETOUR_MODEL_ID"):
         BedrockClient(client=object())
+
+
+def test_progress_text_pluralizes_stop_types() -> None:
+    text = _progress_text("find_stops_along_route", {"types": ["winery", "farm", "brewery"]})
+    assert text == "Looking for wineries, farms, breweries along the way"
