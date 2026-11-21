@@ -265,6 +265,8 @@ class ToolBox:
         self.accepted: dict[str, Any] | None = None  # a plan that passed validate_plan
         self.last_violations: list[dict[str, Any]] = []
         self.validations = 0
+        self.challenged = False  # an acknowledged broken limit was sent back once
+        self.acknowledged: list[dict[str, Any]] = []
 
     def call(self, name: str, args: dict[str, Any]) -> tuple[dict[str, Any], bool]:
         """(result, ok). Errors are results for the model to act on, never exceptions."""
@@ -343,7 +345,21 @@ class ToolBox:
         )
         self.last_violations = [v.to_dict() for v in violations]
         if not blocking(violations):
+            if violations and not self.challenged:
+                # A warning only excuses a limit that truly can't be met: ask once for a fix.
+                self.challenged = True
+                return {
+                    "valid": False,
+                    "needs_confirmation": True,
+                    "violations": self.last_violations,
+                    "message": "This plan breaks a hard limit and only passes because a "
+                    "warning names it. If a plan within the limits is possible (for example by "
+                    "moving overnights to even out the driving, or picking cheaper places), fix "
+                    "it and call validate_plan again. If it is truly impossible with the days "
+                    "and budget requested, call validate_plan again with this same plan.",
+                }
             self.accepted = plan
+            self.acknowledged = self.last_violations
             return {"valid": True, "acknowledged": self.last_violations}
         raw_days = plan.get("days")
         days: list[Any] = raw_days if isinstance(raw_days, list) else []

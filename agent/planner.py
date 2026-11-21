@@ -22,16 +22,18 @@ from agent.plan.catalog import Catalog
 from agent.request import TripRequest
 from agent.tools.registry import Spatial, ToolBox, timed_call, tool_specs
 
-__all__ = ["MAX_TURNS", "PlanResult", "TripRequest", "plan_for_eval", "plan_trip"]
+__all__ = ["MAX_NUDGES", "MAX_TURNS", "PlanResult", "TripRequest", "plan_for_eval", "plan_trip"]
 
-PROMPT_VERSION = "planner.v1"
+PROMPT_VERSION = "planner.v2"
 PROMPT_FILE = Path(__file__).resolve().parents[1] / "prompts" / f"{PROMPT_VERSION}.md"
 MAX_TURNS = 12  # model calls per run
 MAX_VALIDATIONS = 4  # first draft + 3 repair rounds
 MAX_TOKENS = 8000
+MAX_NUDGES = 2  # text-only replies answered with a reminder before giving up
 NUDGE = (
-    "Your plan is only returned through the validate_plan tool. Call validate_plan with the "
-    "complete plan JSON now."
+    "Don't ask the traveler questions: they can't answer. Make reasonable choices and note "
+    "assumptions in warnings. Your plan is only returned through the validate_plan tool: call "
+    "the tools you need, then validate_plan with the complete plan JSON."
 )
 
 Progress = Callable[[dict[str, Any]], None]
@@ -42,6 +44,7 @@ class PlanResult:
     plan: dict[str, Any] | None
     error: str | None = None  # turn_limit | plan_invalid | no_plan
     violations: list[dict[str, Any]] = field(default_factory=list)
+    acknowledged: list[dict[str, Any]] = field(default_factory=list)  # limits a warning names
     allowed_ids: set[str] = field(default_factory=set)
     trace: list[dict[str, Any]] = field(default_factory=list)
     usage: dict[str, int] = field(default_factory=lambda: {"input_tokens": 0, "output_tokens": 0})
@@ -121,12 +124,13 @@ def plan_trip(
     messages: list[dict[str, Any]] = [
         {"role": "user", "content": [{"text": _user_message(request)}]}
     ]
-    nudged = False
+    nudges = 0
 
     def finish(error: str | None) -> PlanResult:
         result.error = error
         result.allowed_ids = set(box.allowed_ids)
         result.violations = [] if error is None else box.last_violations
+        result.acknowledged = box.acknowledged
         result.latency_s = time.perf_counter() - started
         cost = getattr(model, "cost_usd", None)
         result.cost_usd = cost(result.usage) if callable(cost) else None
@@ -145,9 +149,9 @@ def plan_trip(
         uses = [c["toolUse"] for c in message.get("content", []) if "toolUse" in c]
 
         if not uses:
-            if nudged:
+            if nudges >= MAX_NUDGES:
                 return finish("no_plan")
-            nudged = True
+            nudges += 1
             messages.append({"role": "user", "content": [{"text": NUDGE}]})
             continue
 

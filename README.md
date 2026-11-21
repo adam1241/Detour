@@ -98,8 +98,9 @@ rules at 95%.
   `main`; #9 and #14 re-landed them. Stacked PRs are no longer used.
 
 ### Not done yet (honest status)
-- Evals don't run in CI yet: the runner works locally (`python -m evals.runner`), and the
-  baseline `evals/results/main.json` is recorded after the first live run.
+- Evals don't run in CI yet: the runner works locally (`python -m evals.runner`). The first
+  live baseline is `evals/results/main.json` (planner v2, GPT-6 Luna): 20/20 on every gated
+  check, median 16 s and about $0.003 per plan.
 - Bedrock is wired but blocked for Anthropic models on our AWS account, so the planner runs on
   OpenAI for now (ADR-007 amendment).
 
