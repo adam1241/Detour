@@ -11,12 +11,12 @@
         "agent.server",
         "--sample",
         "--port",
-        "8000"
+        "8010"
       ],
       "env": {
         "UV_PROJECT_ENVIRONMENT": "C:/Users/lagss/.venvs/detour"
       },
-      "port": 8000
+      "port": 8010
     },
     {
       "name": "detour-demo-live",
@@ -29,12 +29,12 @@
         "-m",
         "agent.server",
         "--port",
-        "8001"
+        "8011"
       ],
       "env": {
         "UV_PROJECT_ENVIRONMENT": "C:/Users/lagss/.venvs/detour"
       },
-      "port": 8001
+      "port": 8011
     }
   ]
 }
