@@ -21,7 +21,7 @@ import psycopg
 from agent.plan.catalog import Catalog, CatalogError, Place
 from agent.plan.cost import calculate_trip_cost
 from agent.plan.measure import complete_draft, fill_numbers
-from agent.plan.validate import blocking, schema_violations, validate_plan
+from agent.plan.validate import blocking, day_ends, schema_violations, validate_plan
 from agent.request import TripRequest
 from agent.tools.get_route import CORRIDOR_TOWNS, RouteError, canonical_town, get_route
 from agent.tools.spatial import (
@@ -356,6 +356,17 @@ class ToolBox:
             "totals": plan.get("totals"),
             "daily_limit_minutes": self.request.max_drive_minutes,
         }
+        hint = self._drive_hint(plan, violations)
+        if hint is not None:
+            # The trip fits the daily limit on average, so a long day is fixable: never excuse it.
+            return {
+                "valid": False,
+                "violations": [
+                    v.to_dict() for v in violations if v.code == "max_drive" or not v.acknowledged
+                ],
+                "computed": computed,
+                "hint": hint,
+            }
         if not blocking(violations):
             if violations and not self.challenged:
                 # A warning only excuses a limit that truly can't be met: ask once for a fix.
@@ -380,6 +391,35 @@ class ToolBox:
             "violations": [v.to_dict() for v in blocking(violations)],
             "computed": computed,
         }
+
+    def _drive_hint(self, plan: dict[str, Any], violations: list[Any]) -> str | None:
+        """A hint when a max_drive violation is fixable: the route left to plan (from the
+        replanned day on) fits the daily limit on average. None otherwise."""
+        if not any(v.code == "max_drive" for v in violations):
+            return None
+        days = plan["days"]
+        first = (self.request.replan_from_day or 1) - 1  # index of the first changeable day
+        start: Any = plan["origin"]
+        if first > 0:
+            ids = [d["overnight"]["id"] for d in days if d.get("overnight")]
+            ends = day_ends(plan, self.catalog.get(ids))
+            if ends is None:
+                return None
+            start = ends[first - 1]
+        try:
+            total = float(get_route(start, plan["destination"])["duration_min"])
+        except RouteError:
+            return None
+        left = len(days) - first
+        limit = self.request.max_drive_minutes
+        if left <= 0 or total / left > limit:
+            return None
+        return (
+            f"The route left to plan is {total:.0f} min over {left} days, about "
+            f"{total / left:.0f} min a day, within the {limit:.0f} min daily limit. Move the "
+            "overnights so every day's drive_minutes is under the limit; check each town's "
+            "position with get_route."
+        )
 
     def accept(self, plan: dict[str, Any]) -> None:
         self.accepted = plan

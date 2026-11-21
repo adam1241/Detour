@@ -391,3 +391,25 @@ def test_the_challenge_shows_each_days_drive_and_a_target() -> None:
     days = body["computed"]["days"]
     assert [d["day"] for d in days] == [1, 2] and all(d["drive_minutes"] > 60 for d in days)
     assert body["computed"]["daily_limit_minutes"] == 60
+
+
+def test_a_long_day_on_a_trip_that_fits_on_average_cannot_be_excused() -> None:
+    """DC to Staunton is 200 min over 2 days (100/day): under a 110 min limit, a 126 min day
+    must be fixed, not confirmed with a warning."""
+    box = ToolBox(CATALOG, SPATIAL, request(max_drive_minutes=110))
+    box.call("find_hotels_near", {"near": "Luray, VA", "radius_km": 15})
+    for _ in range(3):
+        body, ok = box.call("validate_plan", {"plan": over_limit_plan()})
+        assert ok and body["valid"] is False and "needs_confirmation" not in body
+        assert {v["code"] for v in body["violations"]} == {"max_drive"}
+        assert "100 min a day" in body["hint"]
+    assert box.accepted is None
+
+
+def test_an_impossible_daily_limit_can_still_be_confirmed() -> None:
+    """Under 60 min a day the same trip can't fit (100/day on average): confirm is allowed."""
+    box = ToolBox(CATALOG, SPATIAL, request(max_drive_minutes=60))
+    box.call("find_hotels_near", {"near": "Luray, VA", "radius_km": 15})
+    first, _ = box.call("validate_plan", {"plan": over_limit_plan()})
+    second, _ = box.call("validate_plan", {"plan": over_limit_plan()})
+    assert first["needs_confirmation"] is True and second["valid"] is True
