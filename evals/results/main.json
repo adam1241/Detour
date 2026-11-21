@@ -1,5 +1,5 @@
 {
-  "sha": "4961647",
+  "sha": "8e7f5ff",
   "summary": {
     "checks": {
       "schema": {
@@ -63,11 +63,11 @@
     "gate_ok": true,
     "tracked": {
       "hotel_conversion": 0.7,
-      "first_progress_p50_s": 8.849980076774955e-06,
-      "first_progress_p95_s": 1.303998287767172e-05,
-      "latency_p50_s": 16.18731169999228,
-      "latency_p95_s": 24.098711444978836,
-      "mean_cost_usd": 0.0026761099999999998
+      "first_progress_p50_s": 1.7950020264834166e-05,
+      "first_progress_p95_s": 2.2299995180219412e-05,
+      "latency_p50_s": 14.21425935003208,
+      "latency_p95_s": 29.18414580000681,
+      "mean_cost_usd": 0.0023142450000000004
     }
   },
   "cases": [
@@ -84,9 +84,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 16.654038499982562,
-      "first_progress_s": 1.5700003132224083e-05,
-      "cost_usd": 0.0023681
+      "latency_s": 14.601605700037908,
+      "first_progress_s": 2.800003858283162e-05,
+      "cost_usd": 0.0019881
     },
     {
       "id": "c02_rv_couple_wineries",
@@ -101,9 +101,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 20.40511759999208,
-      "first_progress_s": 1.079996582120657e-05,
-      "cost_usd": 0.0029811
+      "latency_s": 13.826913000026252,
+      "first_progress_s": 2.0600040443241596e-05,
+      "cost_usd": 0.0017661
     },
     {
       "id": "c03_rv_no_hotels",
@@ -119,15 +119,15 @@
       "violations": [
         {
           "code": "max_drive",
-          "message": "Day 3: 327 min of driving, over the 300 min limit",
-          "day": 3,
+          "message": "Day 2: 327 min of driving, over the 300 min limit",
+          "day": 2,
           "acknowledged": true
         }
       ],
       "error": null,
-      "latency_s": 18.525119600002654,
-      "first_progress_s": 8.90000956133008e-06,
-      "cost_usd": 0.0026043000000000004
+      "latency_s": 21.67812729999423,
+      "first_progress_s": 1.6200006939470768e-05,
+      "cost_usd": 0.0030254
     },
     {
       "id": "c04_family_short_hop",
@@ -142,9 +142,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 8.71875189995626,
-      "first_progress_s": 8.79995059221983e-06,
-      "cost_usd": 0.0012298
+      "latency_s": 10.363578299991786,
+      "first_progress_s": 1.7000013031065464e-05,
+      "cost_usd": 0.0014317
     },
     {
       "id": "c05_family_staunton_asheville",
@@ -159,9 +159,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 16.215454399993178,
-      "first_progress_s": 7.90000194683671e-06,
-      "cost_usd": 0.0032916000000000004
+      "latency_s": 7.747985699970741,
+      "first_progress_s": 1.5300000086426735e-05,
+      "cost_usd": 0.0010719000000000002
     },
     {
       "id": "c06_weekend_winery",
@@ -176,9 +176,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 12.401118799985852,
-      "first_progress_s": 1.1599971912801266e-05,
-      "cost_usd": 0.0018675
+      "latency_s": 12.437857799988706,
+      "first_progress_s": 1.5700003132224083e-05,
+      "cost_usd": 0.0015949
     },
     {
       "id": "c07_weekend_farm",
@@ -193,9 +193,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 16.5641054000007,
-      "first_progress_s": 7.499998901039362e-06,
-      "cost_usd": 0.0024023
+      "latency_s": 18.656744899984915,
+      "first_progress_s": 2.0099978428333998e-05,
+      "cost_usd": 0.0024014
     },
     {
       "id": "c08_one_day",
@@ -217,9 +217,9 @@
         }
       ],
       "error": null,
-      "latency_s": 10.746762900031172,
-      "first_progress_s": 1.1300027836114168e-05,
-      "cost_usd": 0.0031784
+      "latency_s": 8.198480700026266,
+      "first_progress_s": 1.8200022168457508e-05,
+      "cost_usd": 0.0017913000000000002
     },
     {
       "id": "c09_impossible_budget",
@@ -235,21 +235,21 @@
       "violations": [
         {
           "code": "max_drive",
-          "message": "Day 3: 341 min of driving, over the 300 min limit",
-          "day": 3,
+          "message": "Day 4: 345 min of driving, over the 300 min limit",
+          "day": 4,
           "acknowledged": true
         },
         {
           "code": "budget",
-          "message": "lodging is $236.00, over the $100 budget",
+          "message": "lodging is $220.00, over the $100 budget",
           "day": null,
           "acknowledged": true
         }
       ],
       "error": null,
-      "latency_s": 29.82596210000338,
-      "first_progress_s": 1.0100018698722124e-05,
-      "cost_usd": 0.0069072000000000005
+      "latency_s": 28.971839100006036,
+      "first_progress_s": 1.8000020645558834e-05,
+      "cost_usd": 0.004709100000000001
     },
     {
       "id": "c10_vague",
@@ -264,9 +264,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 17.335291900031734,
-      "first_progress_s": 8.100003469735384e-06,
-      "cost_usd": 0.0027683
+      "latency_s": 18.7311822999618,
+      "first_progress_s": 2.0499981474131346e-05,
+      "cost_usd": 0.0031926
     },
     {
       "id": "c11_northbound",
@@ -281,9 +281,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 17.582090799987782,
-      "first_progress_s": 7.199996616691351e-06,
-      "cost_usd": 0.0036748
+      "latency_s": 14.954804399982095,
+      "first_progress_s": 1.580000389367342e-05,
+      "cost_usd": 0.0024906999999999998
     },
     {
       "id": "c12_rv_roanoke_asheville",
@@ -298,9 +298,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 5.814332799986005,
-      "first_progress_s": 1.2599979527294636e-05,
-      "cost_usd": 0.0007074000000000001
+      "latency_s": 7.093307000002824,
+      "first_progress_s": 1.7000013031065464e-05,
+      "cost_usd": 0.0009839
     },
     {
       "id": "c13_museums_boone",
@@ -315,9 +315,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 9.674951200024225,
-      "first_progress_s": 7.099995855242014e-06,
-      "cost_usd": 0.0014238
+      "latency_s": 6.704564399959054,
+      "first_progress_s": 2.1099986042827368e-05,
+      "cost_usd": 0.0009481
     },
     {
       "id": "c14_rv_front_royal_staunton",
@@ -332,9 +332,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 6.9582388999988325,
-      "first_progress_s": 7.599999662488699e-06,
-      "cost_usd": 0.0009924
+      "latency_s": 7.267524799972307,
+      "first_progress_s": 1.3199984095990658e-05,
+      "cost_usd": 0.0010750999999999998
     },
     {
       "id": "c15_short_days_museums",
@@ -349,9 +349,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 16.15916899999138,
-      "first_progress_s": 1.0699965059757233e-05,
-      "cost_usd": 0.0023871000000000005
+      "latency_s": 14.705495700007305,
+      "first_progress_s": 1.969997538253665e-05,
+      "cost_usd": 0.0024058
     },
     {
       "id": "c16_rv_northbound_budget",
@@ -366,9 +366,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 15.338804300001357,
-      "first_progress_s": 1.0600022505968809e-05,
-      "cost_usd": 0.0024831999999999996
+      "latency_s": 20.180743100005202,
+      "first_progress_s": 1.680001150816679e-05,
+      "cost_usd": 0.0033869
     },
     {
       "id": "c17_two_hour_days",
@@ -390,27 +390,21 @@
         },
         {
           "code": "max_drive",
-          "message": "Day 2: 169 min of driving, over the 120 min limit",
-          "day": 2,
-          "acknowledged": true
-        },
-        {
-          "code": "max_drive",
-          "message": "Day 3: 223 min of driving, over the 120 min limit",
+          "message": "Day 3: 316 min of driving, over the 120 min limit",
           "day": 3,
           "acknowledged": true
         },
         {
           "code": "max_drive",
-          "message": "Day 4: 128 min of driving, over the 120 min limit",
+          "message": "Day 4: 133 min of driving, over the 120 min limit",
           "day": 4,
           "acknowledged": true
         }
       ],
       "error": null,
-      "latency_s": 23.797277199977543,
-      "first_progress_s": 8.000002708286047e-06,
-      "cost_usd": 0.004535399999999999
+      "latency_s": 33.21797310002148,
+      "first_progress_s": 1.8400023691356182e-05,
+      "cost_usd": 0.0063023
     },
     {
       "id": "c18_replan_cheaper",
@@ -425,9 +419,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 20.240804500004742,
-      "first_progress_s": 1.2899981811642647e-05,
-      "cost_usd": 0.003954
+      "latency_s": 11.47394679998979,
+      "first_progress_s": 1.1599971912801266e-05,
+      "cost_usd": 0.001503
     },
     {
       "id": "c19_replan_shorter_day2",
@@ -442,9 +436,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 10.207101100008003,
-      "first_progress_s": 8.300004992634058e-06,
-      "cost_usd": 0.0015092999999999999
+      "latency_s": 15.38153490005061,
+      "first_progress_s": 1.7900019884109497e-05,
+      "cost_usd": 0.0025761000000000004
     },
     {
       "id": "c20_replan_more_outdoors",
@@ -459,9 +453,9 @@
       },
       "violations": [],
       "error": null,
-      "latency_s": 14.048507000028621,
-      "first_progress_s": 7.399998139590025e-06,
-      "cost_usd": 0.0022562
+      "latency_s": 12.748062700033188,
+      "first_progress_s": 2.19999928958714e-05,
+      "cost_usd": 0.0016405
     }
   ]
 }

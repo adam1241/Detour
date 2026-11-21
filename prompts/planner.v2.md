@@ -41,6 +41,10 @@ breweries, museums) along the way.
 - reason_code is the deciding factor: "drive_time" (it splits the driving well),
   "consecutive_host_nights" (a hotel after host nights for a shower and laundry), or "budget".
 - For an RV, prefer a mix: no more than two host nights in a row; then a hotel.
+- When asked to make a plan cheaper: for each night you may change, call find_hotels_near with
+  radius_km 30 and max_price_usd just below that night's current price (for an RV, also consider
+  overnight_ok host stops). Swap in a cheaper place whenever one fits the route and driving
+  limits. If none exists, keep the plan and add a warning saying no cheaper option was found.
 - reason is exactly one sentence, at most 200 characters.
 
 # Stay within the limits whenever you can

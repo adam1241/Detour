@@ -100,7 +100,7 @@ rules at 95%.
 ### Not done yet (honest status)
 - Evals don't run in CI yet: the runner works locally (`python -m evals.runner`). The first
   live baseline is `evals/results/main.json` (planner v2, GPT-6 Luna): 20/20 on every gated
-  check, median 16 s and about $0.003 per plan.
+  check, median 14 s and about $0.002 per plan.
 - Bedrock is wired but blocked for Anthropic models on our AWS account, so the planner runs on
   OpenAI for now (ADR-007 amendment).
 
