@@ -201,6 +201,7 @@ Tracing: every run logs tool calls, order, latency, tokens, cost, prompt_version
 - [ADR-005](adr/005-web-app-map-and-agent-invocation.md): Vercel Hobby, server-side SigV4 calls to AgentCore, streamed progress, MapLibre, plan hydration, per-IP rate limit.
 - [ADR-006](adr/006-database-migrations.md): plain numbered SQL migrations with a small tested runner (`db/migrate.py`); fix forward, no down-migrations.
 - [ADR-007](adr/007-agent-loop-bedrock-converse.md): own tool-use loop (Converse-shaped), plan returned only through `validate_plan`, numbers filled from tools; amended: OpenAI GPT-6 Luna by default, Bedrock selectable.
+- [ADR-008](adr/008-nationwide-coverage.md) (**proposed**): nationwide coverage from OpenStreetMap and RIDB places, OpenRouteService routing, prices only where sourced. Scope stays one corridor until accepted; plan in [docs/plans/nationwide.md](plans/nationwide.md).
 
 ---
 
