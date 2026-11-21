@@ -7,6 +7,7 @@
 > **Note:** Unofficial proof of concept. Not affiliated with or endorsed by Choice Hotels International or Harvest Hosts. All hotel and host data in this repo is a hand-curated *sample* from public information, with a source URL on every row. Host places are **example host-style stops**: we never claim that a business is a Harvest Hosts member. No logos or trademarks are used as branding.
 
 ### Changelog
+- **v0.5 (2026-11-20):** Planner model switched to OpenAI GPT-6 Luna (`gpt-6-luna`, Responses API with function calling) because the AWS account is blocked from Anthropic models on Bedrock. The Bedrock client stays and can be selected with `DETOUR_PROVIDER=bedrock` (ADR-007 amendment).
 - **v0.4 (2026-11-20):** Agent loop on the Bedrock Converse API instead of Strands (ADR-007). Drive times, distances and totals in a plan are filled in by code from the tools; the model drafts the structure. Final-day cut-line: the agent runs locally (no AgentCore), and the demo is a local page instead of a Vercel deploy.
 - **v0.3 (2026-11-18):** AI code reviewer switched from Claude to OpenAI Codex (`openai/codex-action`, pinned SHA, `pull_request_target` with trusted base policy), key in `OPENAI_API_KEY` in the `ai-review` environment (ADR-004 amendment). The planner agent stays Claude on Bedrock.
 - **v0.2 (2026-11-17):** Applied kickoff answers. Added `vehicle` input (rv/car); defined days vs nights, budget (lodging only) and points (redemption); removed weather from reasons and the feedback table; fixed corridor waypoints and cached corridor route; `max_detour_km` default 30; new latency targets (first progress < 3s, plan < 45s); replan scope ("affected" days); infeasible-case eval rule and main-comparison tolerance; merge process without required approvals; cost controls; ADR-004 and ADR-005 added; business context sources added; Day 1 capped at 5 PRs.
@@ -181,7 +182,7 @@ trips(id, request_text, vehicle, plan_json, trace_json, created_at, model, promp
 [Next.js web app on Vercel] ──HTTP (SSE progress)──> [Next.js route handler]
       │                                                   │ SigV4
       │                                                   v
-      │                              [Agent on AWS Bedrock AgentCore (Claude, Python, Converse loop)]
+      │                              [Agent on AWS Bedrock AgentCore (OpenAI GPT-6 Luna, Python loop)]
       │                                                   │ tool calls
       │                                                   ├── get_route ──────────> cached corridor route (built with OSRM)
       │                                                   ├── find_* ─────────────> Neon Postgres + PostGIS
@@ -198,7 +199,7 @@ Tracing: every run logs tool calls, order, latency, tokens, cost, prompt_version
 - [ADR-004](adr/004-evals-merge-gate-and-tracing.md): custom pytest eval runner, merge gate with tolerance vs `main`, path-filtered eval runs, merge process without required approvals, tracing.
 - [ADR-005](adr/005-web-app-map-and-agent-invocation.md): Vercel Hobby, server-side SigV4 calls to AgentCore, streamed progress, MapLibre, plan hydration, per-IP rate limit.
 - [ADR-006](adr/006-database-migrations.md): plain numbered SQL migrations with a small tested runner (`db/migrate.py`); fix forward, no down-migrations.
-- [ADR-007](adr/007-agent-loop-bedrock-converse.md): own tool-use loop on the Bedrock Converse API (`boto3`), plan returned only through `validate_plan`, numbers filled from tools.
+- [ADR-007](adr/007-agent-loop-bedrock-converse.md): own tool-use loop (Converse-shaped), plan returned only through `validate_plan`, numbers filled from tools; amended: OpenAI GPT-6 Luna by default, Bedrock selectable.
 
 ---
 

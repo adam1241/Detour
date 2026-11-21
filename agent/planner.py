@@ -17,7 +17,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
-from agent.llm import BedrockClient, ModelClient
+from agent.llm import ModelClient, make_model
 from agent.plan.catalog import Catalog
 from agent.request import TripRequest
 from agent.tools.registry import Spatial, ToolBox, timed_call, tool_specs
@@ -50,6 +50,7 @@ class PlanResult:
     prompt_version: str = PROMPT_VERSION
     first_progress_s: float | None = None
     latency_s: float | None = None
+    cost_usd: float | None = None  # when the provider's price is known
 
 
 @cache
@@ -85,7 +86,8 @@ def _progress_text(name: str, args: dict[str, Any]) -> str:
             args.get("destination")
         )
     if name == "find_stops_along_route":
-        kinds = ", ".join(f"{t}s" for t in args.get("types") or []) or "stops"
+        plural = {"winery": "wineries", "brewery": "breweries"}
+        kinds = ", ".join(plural.get(t, f"{t}s") for t in args.get("types") or []) or "stops"
         return f"Looking for {kinds} along the way"
     if name == "find_hotels_near":
         return f"Looking for hotels near {place(args.get('near'))}"
@@ -126,6 +128,8 @@ def plan_trip(
         result.allowed_ids = set(box.allowed_ids)
         result.violations = [] if error is None else box.last_violations
         result.latency_s = time.perf_counter() - started
+        cost = getattr(model, "cost_usd", None)
+        result.cost_usd = cost(result.usage) if callable(cost) else None
         return result
 
     while result.turns < MAX_TURNS:
@@ -177,7 +181,7 @@ def plan_trip(
 
 @cache
 def _default_model() -> ModelClient:
-    return BedrockClient()
+    return make_model()
 
 
 @cache
@@ -217,6 +221,6 @@ def plan_for_eval(case: Any, previous: dict[str, Any] | None) -> Any:
         allowed_ids=out.allowed_ids,
         latency_s=out.latency_s,
         first_progress_s=out.first_progress_s,
-        cost_usd=None,  # set once the Bedrock price for the model is confirmed
+        cost_usd=out.cost_usd,
         error=out.error,
     )
