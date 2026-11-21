@@ -1,0 +1,114 @@
+name: evals
+
+# Eval merge gate (spec §8, ADR-004). Runs the 20 live eval cases on PRs that change the
+# agent, prompts, evals or the plan schema, scores them against the thresholds and main's
+# baseline (evals/results/main.json on the base branch), and posts the table on the PR.
+#
+# The job always runs so it can be a required check; PRs that touch none of those paths pass
+# in seconds without calling the model.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evals-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: evals # holds OPENAI_API_KEY (spend-limited key)
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: relevant changes?
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" != "pull_request" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          changed=$(git diff --name-only "$BASE_SHA" HEAD -- agent prompts evals packages/schema)
+          if [ -n "$changed" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "No changes under agent/, prompts/, evals/ or packages/schema/: evals skipped." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: baseline from the base branch
+        if: steps.changes.outputs.run == 'true'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.sha }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/baseline"
+          if git show "$BASE_SHA:evals/results/main.json" > "$RUNNER_TEMP/baseline/main.json" 2>/dev/null; then
+            echo "Comparing against main's baseline."
+          else
+            rm -f "$RUNNER_TEMP/baseline/main.json"
+            echo "No baseline on the base branch: thresholds only."
+          fi
+
+      - uses: astral-sh/setup-uv@v5
+        if: steps.changes.outputs.run == 'true'
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: install
+        if: steps.changes.outputs.run == 'true'
+        run: uv sync --locked
+
+      - name: run evals
+        if: steps.changes.outputs.run == 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "::error::OPENAI_API_KEY is not set in the 'evals' environment."
+            exit 1
+          fi
+          set +e
+          uv run python -m evals.runner --planner agent.planner:plan_for_eval --seed-catalog \
+            --baseline "$RUNNER_TEMP/baseline/main.json" --out "$RUNNER_TEMP/results"
+          status=$?
+          set -e
+          cat "$RUNNER_TEMP"/results/*.md >> "$GITHUB_STEP_SUMMARY"
+          exit $status
+
+      - name: upload results
+        if: always() && steps.changes.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: ${{ runner.temp }}/results
+          if-no-files-found: ignore
+
+      - name: comment on the PR
+        if: always() && steps.changes.outputs.run == 'true' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          md=$(cat "$RUNNER_TEMP"/results/*.md 2>/dev/null || echo "Evals did not produce results; see the job log.")
+          body=$(printf '<!-- detour-evals -->\n%s\n' "$md")
+          id=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- detour-evals -->"))) | .id' | tail -1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$REPO/issues/comments/$id" -f body="$body" > /dev/null
+          else
+            gh api "repos/$REPO/issues/$PR/comments" -f body="$body" > /dev/null
+          fi
