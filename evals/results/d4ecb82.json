@@ -1,0 +1,461 @@
+{
+  "sha": "d4ecb82",
+  "summary": {
+    "checks": {
+      "schema": {
+        "passed": 19,
+        "applicable": 20,
+        "failures": 1,
+        "rate": 0.95,
+        "threshold": 1.0,
+        "ok": false
+      },
+      "grounding": {
+        "passed": 19,
+        "applicable": 20,
+        "failures": 1,
+        "rate": 0.95,
+        "threshold": 1.0,
+        "ok": false
+      },
+      "max_drive": {
+        "passed": 19,
+        "applicable": 20,
+        "failures": 1,
+        "rate": 0.95,
+        "threshold": 0.95,
+        "ok": true
+      },
+      "budget": {
+        "passed": 10,
+        "applicable": 10,
+        "failures": 0,
+        "rate": 1.0,
+        "threshold": 0.95,
+        "ok": true
+      },
+      "route_order": {
+        "passed": 19,
+        "applicable": 20,
+        "failures": 1,
+        "rate": 0.95,
+        "threshold": 0.95,
+        "ok": true
+      },
+      "vehicle": {
+        "passed": 19,
+        "applicable": 20,
+        "failures": 1,
+        "rate": 0.95,
+        "threshold": 0.95,
+        "ok": true
+      },
+      "replan_earlier_days": {
+        "passed": 2,
+        "applicable": 3,
+        "failures": 1,
+        "rate": 0.6666666666666666,
+        "threshold": 0.95,
+        "ok": false
+      }
+    },
+    "regressions": [],
+    "gate_ok": false,
+    "tracked": {
+      "hotel_conversion": 0.6,
+      "first_progress_p50_s": 1.5400000847876072e-05,
+      "first_progress_p95_s": 1.8450021161697806e-05,
+      "latency_p50_s": 18.217274650000036,
+      "latency_p95_s": 27.434582990020864,
+      "mean_cost_usd": 0.00267327
+    }
+  },
+  "cases": [
+    {
+      "id": "c01_rv_couple_classic",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": true,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 16.116765499988105,
+      "first_progress_s": 1.1399970389902592e-05,
+      "cost_usd": 0.0019242
+    },
+    {
+      "id": "c02_rv_couple_wineries",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": null,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 18.251640299975406,
+      "first_progress_s": 9.700015652924776e-06,
+      "cost_usd": 0.0018252000000000001
+    },
+    {
+      "id": "c03_rv_no_hotels",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": null,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [
+        {
+          "code": "max_drive",
+          "message": "Day 3: 327 min of driving, over the 300 min limit",
+          "day": 3,
+          "acknowledged": true
+        }
+      ],
+      "error": null,
+      "latency_s": 20.640896199969575,
+      "first_progress_s": 8.100003469735384e-06,
+      "cost_usd": 0.0027973000000000004
+    },
+    {
+      "id": "c04_family_short_hop",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": true,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 10.89700100000482,
+      "first_progress_s": 1.2599979527294636e-05,
+      "cost_usd": 0.0016704
+    },
+    {
+      "id": "c05_family_staunton_asheville",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": true,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 10.904038600041531,
+      "first_progress_s": 1.4700053725391626e-05,
+      "cost_usd": 0.0017049
+    },
+    {
+      "id": "c06_weekend_winery",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": true,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 8.699145599966869,
+      "first_progress_s": 1.650000922381878e-05,
+      "cost_usd": 0.0012528
+    },
+    {
+      "id": "c07_weekend_farm",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": null,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 18.182909000024665,
+      "first_progress_s": 1.6700010746717453e-05,
+      "cost_usd": 0.0029298
+    },
+    {
+      "id": "c08_one_day",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": null,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [
+        {
+          "code": "max_drive",
+          "message": "Day 1: 638 min of driving, over the 300 min limit",
+          "day": 1,
+          "acknowledged": true
+        }
+      ],
+      "error": null,
+      "latency_s": 8.63949260005029,
+      "first_progress_s": 1.8300022929906845e-05,
+      "cost_usd": 0.0017725
+    },
+    {
+      "id": "c09_impossible_budget",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": true,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [
+        {
+          "code": "max_drive",
+          "message": "Day 3: 363 min of driving, over the 300 min limit",
+          "day": 3,
+          "acknowledged": true
+        },
+        {
+          "code": "budget",
+          "message": "lodging is $221.00, over the $100 budget",
+          "day": null,
+          "acknowledged": true
+        }
+      ],
+      "error": null,
+      "latency_s": 26.28715079999529,
+      "first_progress_s": 1.6099947970360518e-05,
+      "cost_usd": 0.004731600000000001
+    },
+    {
+      "id": "c10_vague",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": null,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 19.61260290001519,
+      "first_progress_s": 1.8199963960796595e-05,
+      "cost_usd": 0.0032645
+    },
+    {
+      "id": "c11_northbound",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": true,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 19.901183599955402,
+      "first_progress_s": 1.699995482340455e-05,
+      "cost_usd": 0.0034204
+    },
+    {
+      "id": "c12_rv_roanoke_asheville",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": null,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 8.312011100002564,
+      "first_progress_s": 2.1299987565726042e-05,
+      "cost_usd": 0.0012469
+    },
+    {
+      "id": "c13_museums_boone",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": true,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 10.16066450002836,
+      "first_progress_s": 1.7200014553964138e-05,
+      "cost_usd": 0.0013817999999999999
+    },
+    {
+      "id": "c14_rv_front_royal_staunton",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": null,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 6.273803099989891,
+      "first_progress_s": 1.6799953300505877e-05,
+      "cost_usd": 0.0008623000000000001
+    },
+    {
+      "id": "c15_short_days_museums",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": null,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 9.720184199977666,
+      "first_progress_s": 1.7200014553964138e-05,
+      "cost_usd": 0.001395
+    },
+    {
+      "id": "c16_rv_northbound_budget",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": true,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 23.521045200002845,
+      "first_progress_s": 1.4199991710484028e-05,
+      "cost_usd": 0.0026501000000000003
+    },
+    {
+      "id": "c17_two_hour_days",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": null,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": null
+      },
+      "violations": [
+        {
+          "code": "max_drive",
+          "message": "Day 1: 126 min of driving, over the 120 min limit",
+          "day": 1,
+          "acknowledged": true
+        },
+        {
+          "code": "max_drive",
+          "message": "Day 3: 315 min of driving, over the 120 min limit",
+          "day": 3,
+          "acknowledged": true
+        },
+        {
+          "code": "max_drive",
+          "message": "Day 4: 128 min of driving, over the 120 min limit",
+          "day": 4,
+          "acknowledged": true
+        }
+      ],
+      "error": null,
+      "latency_s": 27.238880200020503,
+      "first_progress_s": 1.1300027836114168e-05,
+      "cost_usd": 0.004835600000000001
+    },
+    {
+      "id": "c18_replan_cheaper",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": true,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": true
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 19.972054800018668,
+      "first_progress_s": 8.600007276982069e-06,
+      "cost_usd": 0.0032362000000000003
+    },
+    {
+      "id": "c19_replan_shorter_day2",
+      "checks": {
+        "schema": true,
+        "grounding": true,
+        "max_drive": true,
+        "budget": true,
+        "route_order": true,
+        "vehicle": true,
+        "replan_earlier_days": true
+      },
+      "violations": [],
+      "error": null,
+      "latency_s": 19.96914529998321,
+      "first_progress_s": 1.179997343569994e-05,
+      "cost_usd": 0.0038096000000000002
+    },
+    {
+      "id": "c20_replan_more_outdoors",
+      "checks": {
+        "schema": false,
+        "grounding": false,
+        "max_drive": false,
+        "budget": null,
+        "route_order": false,
+        "vehicle": false,
+        "replan_earlier_days": false
+      },
+      "violations": [],
+      "error": "no_plan",
+      "latency_s": 31.152936000027694,
+      "first_progress_s": 1.460005296394229e-05,
+      "cost_usd": 0.0067543
+    }
+  ]
+}
