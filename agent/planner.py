@@ -101,6 +101,14 @@ def _progress_text(name: str, args: dict[str, Any]) -> str:
     return f"Running {name}"
 
 
+def _finalize(box: ToolBox) -> dict[str, Any]:
+    plan = box.accepted
+    if plan is None:
+        raise RuntimeError("no accepted plan to finalize")
+    plan["trip_id"] = str(uuid.uuid4())
+    return plan
+
+
 def plan_trip(
     request: TripRequest,
     *,
@@ -149,6 +157,10 @@ def plan_trip(
         uses = [c["toolUse"] for c in message.get("content", []) if "toolUse" in c]
 
         if not uses:
+            if box.confirm_challenged():
+                result.plan = _finalize(box)
+                emit("Plan ready")
+                return finish(None)
             if nudges >= MAX_NUDGES:
                 return finish("no_plan")
             nudges += 1
@@ -168,9 +180,7 @@ def plan_trip(
                 block["status"] = "error"
             results.append({"toolResult": block})
             if box.accepted is not None:
-                plan = box.accepted
-                plan["trip_id"] = str(uuid.uuid4())
-                result.plan = plan
+                result.plan = _finalize(box)
                 emit("Plan ready")
                 return finish(None)
         if box.validations >= MAX_VALIDATIONS:

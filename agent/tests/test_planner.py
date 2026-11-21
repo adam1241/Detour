@@ -368,3 +368,26 @@ def test_a_plan_fixed_on_the_fifth_validation_is_accepted() -> None:
         [HOTELS_NEAR_LURAY, *invalid, tool("validate_plan", {"plan": luray_plan()}, "ok")]
     )
     assert result.error is None
+
+
+def test_a_text_reply_after_a_challenge_confirms_the_challenged_plan() -> None:
+    result, model = run(
+        [
+            HOTELS_NEAR_LURAY,
+            tool("validate_plan", {"plan": over_limit_plan()}, "v1"),
+            text("A shorter plan isn't possible with these days."),
+        ],
+        request(max_drive_minutes=60),
+    )
+    assert result.error is None and len(model.calls) == 3
+    assert {v["code"] for v in result.acknowledged} == {"max_drive"}
+
+
+def test_the_challenge_shows_each_days_drive_and_a_target() -> None:
+    box = ToolBox(CATALOG, SPATIAL, request(max_drive_minutes=60))
+    box.call("find_hotels_near", {"near": "Luray, VA", "radius_km": 15})
+    body, ok = box.call("validate_plan", {"plan": over_limit_plan()})
+    assert ok and body["needs_confirmation"] is True
+    days = body["computed"]["days"]
+    assert [d["day"] for d in days] == [1, 2] and all(d["drive_minutes"] > 60 for d in days)
+    assert body["computed"]["daily_limit_minutes"] == 60

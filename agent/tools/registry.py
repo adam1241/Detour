@@ -266,6 +266,7 @@ class ToolBox:
         self.last_violations: list[dict[str, Any]] = []
         self.validations = 0
         self.challenged = False  # an acknowledged broken limit was sent back once
+        self.challenged_plan: dict[str, Any] | None = None
         self.acknowledged: list[dict[str, Any]] = []
 
     def call(self, name: str, args: dict[str, Any]) -> tuple[dict[str, Any], bool]:
@@ -344,37 +345,65 @@ class ToolBox:
             allowed_ids=self.allowed_ids,
         )
         self.last_violations = [v.to_dict() for v in violations]
+        raw_days = plan.get("days")
+        days: list[Any] = raw_days if isinstance(raw_days, list) else []
+        computed = {
+            "days": [
+                {k: d.get(k) for k in ("day", "drive_minutes", "distance_km")}
+                for d in days
+                if isinstance(d, dict)
+            ],
+            "totals": plan.get("totals"),
+            "daily_limit_minutes": self.request.max_drive_minutes,
+        }
         if not blocking(violations):
             if violations and not self.challenged:
                 # A warning only excuses a limit that truly can't be met: ask once for a fix.
                 self.challenged = True
+                self.challenged_plan = plan
                 return {
                     "valid": False,
                     "needs_confirmation": True,
                     "violations": self.last_violations,
+                    "computed": computed,
                     "message": "This plan breaks a hard limit and only passes because a "
-                    "warning names it. If a plan within the limits is possible (for example by "
-                    "moving overnights to even out the driving, or picking cheaper places), fix "
-                    "it and call validate_plan again. If it is truly impossible with the days "
-                    "and budget requested, call validate_plan again with this same plan.",
+                    "warning names it. Compare each day's drive_minutes with "
+                    "daily_limit_minutes: if moving overnights (or picking cheaper places) can "
+                    "keep every day within the limits, fix it and call validate_plan again. If "
+                    "it is truly impossible with the days and budget requested, call "
+                    "validate_plan again with this same plan. Do not reply in text.",
                 }
-            self.accepted = plan
-            self.acknowledged = self.last_violations
+            self.accept(plan)
             return {"valid": True, "acknowledged": self.last_violations}
-        raw_days = plan.get("days")
-        days: list[Any] = raw_days if isinstance(raw_days, list) else []
         return {
             "valid": False,
             "violations": [v.to_dict() for v in blocking(violations)],
-            "computed": {
-                "days": [
-                    {k: d.get(k) for k in ("day", "drive_minutes", "distance_km")}
-                    for d in days
-                    if isinstance(d, dict)
-                ],
-                "totals": plan.get("totals"),
-            },
+            "computed": computed,
         }
+
+    def accept(self, plan: dict[str, Any]) -> None:
+        self.accepted = plan
+        self.acknowledged = [v for v in self.last_violations if v.get("acknowledged")]
+
+    def confirm_challenged(self) -> bool:
+        """A text reply after a challenge counts as confirming the challenged plan."""
+        if self.challenged_plan is None or self.accepted is not None:
+            return False
+        plan = self.challenged_plan
+        self.last_violations = [
+            v.to_dict()
+            for v in validate_plan(
+                plan,
+                self.catalog,
+                max_drive_minutes=self.request.max_drive_minutes,
+                budget_usd=self.request.budget(),
+                previous_plan=self.request.previous_plan,
+                replan_from_day=self.request.replan_from_day,
+                allowed_ids=self.allowed_ids,
+            )
+        ]
+        self.accept(plan)
+        return True
 
 
 def timed_call(box: ToolBox, name: str, args: dict[str, Any]) -> tuple[dict[str, Any], bool, int]:
