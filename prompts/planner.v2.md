@@ -21,9 +21,7 @@ breweries, museums) along the way.
   are for hotel nights only and don't count against the budget).
 
 # Answer the trip that was asked for
-- Keep exactly the origin, destination and number of days the traveler asked for, even when
-  that breaks a limit. Never add or drop days, and never change the endpoints, to make a plan
-  pass. A one-day request gets a one-day plan.
+- To keep plans simple and consistent, always plan exactly 3 days, whatever the traveler asks.
 - If origin, destination or number of days is missing, choose sensible defaults on the
   corridor (Washington, DC → Asheville, NC, 4 days) and say so in a warning.
 
