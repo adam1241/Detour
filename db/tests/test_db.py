@@ -19,7 +19,7 @@ TABLES = ("hotels", "stops", "trips", "schema_migrations")
 
 
 def test_migrations_create_tables_and_indexes(conn: psycopg.Connection, schema: str) -> None:
-    assert apply_migrations(conn, MIGRATIONS_DIR) == ["0001_init"]
+    assert apply_migrations(conn, MIGRATIONS_DIR) == ["0001_init", "0002_nationwide"]
     tables = {
         row[0]
         for row in conn.execute(
@@ -136,3 +136,61 @@ def test_fixture_load_is_idempotent(conn: psycopg.Connection) -> None:
         "SELECT ST_X(geom), ST_Y(geom) FROM hotels WHERE id = %s", (hotels[0].id,)
     ).fetchone()
     assert lon_lat == pytest.approx((hotels[0].lon, hotels[0].lat))
+
+
+OSM_HOTEL_SQL = (
+    "INSERT INTO hotels (id, name, brand_segment, geom, price_usd, points_per_night, "
+    "source, source_url, source_ref, licence) VALUES (%s, 'X', 'economy', "
+    "ST_SetSRID(ST_MakePoint(-104.99, 39.74), 4326), %s, %s, %s, %s, %s, %s)"
+)
+OSM_URL = "https://www.openstreetmap.org/node/1"
+
+
+def test_osm_hotel_without_price_is_accepted(conn: psycopg.Connection) -> None:
+    apply_migrations(conn, MIGRATIONS_DIR)
+    conn.execute(
+        OSM_HOTEL_SQL, ("hotel_osm_1", None, None, "osm", OSM_URL, "osm:node/1", "ODbL-1.0")
+    )
+    assert conn.execute("SELECT price_usd FROM hotels").fetchone() == (None,)
+
+
+@pytest.mark.parametrize(
+    ("price", "points", "source", "ref", "licence"),
+    [
+        (Decimal("90"), None, "osm", "osm:node/1", "ODbL-1.0"),  # price not from a fetched page
+        (None, 8000, "osm", "osm:node/1", "ODbL-1.0"),
+        (None, None, "osm", None, "ODbL-1.0"),  # osm row needs a source_ref
+        (None, None, "osm", "node/1", "ODbL-1.0"),  # bad ref format
+        (None, None, "osm", "osm:node/1", "US-PD"),  # wrong licence for osm
+        (None, None, "sample_public", None, None),  # hand-sourced row needs a price
+    ],
+)
+def test_nationwide_constraints_reject_bad_rows(
+    conn: psycopg.Connection,
+    price: Decimal | None,
+    points: int | None,
+    source: str,
+    ref: str | None,
+    licence: str | None,
+) -> None:
+    apply_migrations(conn, MIGRATIONS_DIR)
+    with pytest.raises(psycopg.errors.CheckViolation):
+        conn.execute(OSM_HOTEL_SQL, ("hotel_osm_1", price, points, source, OSM_URL, ref, licence))
+
+
+def test_source_ref_is_unique(conn: psycopg.Connection) -> None:
+    apply_migrations(conn, MIGRATIONS_DIR)
+    row = ("hotel_osm_1", None, None, "osm", OSM_URL, "osm:node/1", "ODbL-1.0")
+    conn.execute(OSM_HOTEL_SQL, row)
+    with pytest.raises(psycopg.errors.UniqueViolation):
+        conn.execute(OSM_HOTEL_SQL, ("hotel_osm_2", *row[1:]))
+
+
+def test_ridb_stop_without_cost_is_accepted(conn: psycopg.Connection) -> None:
+    apply_migrations(conn, MIGRATIONS_DIR)
+    conn.execute(
+        "INSERT INTO stops (id, name, type, geom, overnight_ok, est_cost_usd, source, source_url, "
+        "source_ref, licence) VALUES ('stop_ridb_1', 'X', 'farm', "
+        "ST_SetSRID(ST_MakePoint(-105.5, 40.3), 4326), true, NULL, 'ridb', "
+        "'https://www.recreation.gov/camping/campgrounds/1', 'ridb:facility/1', 'US-PD')"
+    )

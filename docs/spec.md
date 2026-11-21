@@ -164,13 +164,14 @@ Implementation (PR "plan validation", 2026-11-19):
 
 ### 6.2 Data model (PostGIS)
 ```
-hotels(id, name, brand_segment, geom POINT, price_usd, points_per_night, amenities[], source, source_url)
-stops(id, name, type, geom POINT, overnight_ok BOOL, est_cost_usd, description, source, source_url)
+hotels(id, name, brand_segment, geom POINT, price_usd?, points_per_night?, amenities[], source, source_url, source_ref?, licence?)
+stops(id, name, type, geom POINT, overnight_ok BOOL, est_cost_usd?, description, source, source_url, source_ref?, licence?)
 trips(id, request_text, vehicle, plan_json, trace_json, created_at, model, prompt_version, eval_tags[])
 ```
 - Spatial indexes (GIST) on all `geom` columns, plus a GIST expression index on `(geom::geography)` (ADR-003).
 - Constraints (migration `0001_init`): `brand_segment` in economy/midscale/upscale; stop `type` in winery/farm/brewery/museum; `vehicle` in rv/car; prices `numeric(8,2)`; `source_url` must start with `https://`.
-- `source` is `sample_public` for real sample rows. `test_fixture` is allowed only for synthetic test rows, and the seed loader refuses it outside tests. Sourcing rules and price/points tiers: [`db/seed/README.md`](../db/seed/README.md).
+- `source` is `sample_public` for real sample rows. `test_fixture` is allowed only for synthetic test rows, and the seed loader refuses it outside tests.
+- Migration `0002_nationwide` (ADR-008): `source` also allows `osm` and `ridb` (imported rows). Prices (`?` above) are required on hand-sourced rows and forbidden on imported rows: prices only come from a fetched page. Imported rows need `source_ref` (`osm:node/123`, `ridb:facility/456`, unique) and `licence` (`ODbL-1.0` for OSM, `US-PD` for RIDB). The loader's bounding box is the contiguous US. Sourcing rules and price/points tiers: [`db/seed/README.md`](../db/seed/README.md).
 - The corridor search uses `ST_DWithin` against the route LineString (geography type, meters).
 - `trace_json` holds tool calls, order, latency, tokens and cost for the run (ADR-004).
 - The feedback table is dropped for v1.
