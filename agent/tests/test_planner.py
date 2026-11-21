@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from agent.llm import BedrockClient
-from agent.planner import MAX_TURNS, TripRequest, _progress_text, plan_trip
+from agent.planner import MAX_NUDGES, MAX_TURNS, TripRequest, _progress_text, plan_trip
 from agent.tools.registry import MemorySpatial, ToolBox, tool_specs
 from evals.catalog import seed_catalog
 
@@ -211,8 +211,20 @@ def test_a_text_answer_is_nudged_to_validate_then_fails() -> None:
         assert "validate_plan" in messages[-1]["content"][0]["text"]
         return text("Here is your plan!")
 
-    result, _ = run([text("Here is your plan!"), nudged])
+    result, model = run([text("Here is your plan!"), nudged, nudged])
     assert result.plan is None and result.error == "no_plan"
+    assert len(model.calls) == 1 + MAX_NUDGES
+
+
+def test_a_question_is_nudged_and_the_plan_still_arrives() -> None:
+    result, _ = run(
+        [
+            text("Do you prefer farms or wineries?"),
+            HOTELS_NEAR_LURAY,
+            tool("validate_plan", {"plan": luray_plan()}, "v1"),
+        ]
+    )
+    assert result.error is None
 
 
 def test_first_progress_event_comes_before_the_first_model_call() -> None:
