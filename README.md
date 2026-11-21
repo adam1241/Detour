@@ -25,9 +25,10 @@ Sources: [`docs/context-sources.md`](docs/context-sources.md).
 uv sync
 uv run python -m agent.server --sample      # no AWS: replays a validated sample plan
 ```
-Open http://127.0.0.1:8000. For live plans from Claude on Bedrock (ADR-007):
+Open http://127.0.0.1:8000. For live plans from OpenAI GPT-6 Luna (ADR-007), put
+`OPENAI_API_KEY=...` in `.env` and run:
 ```
-DETOUR_MODEL_ID=<bedrock model or inference-profile id> AWS_PROFILE=detour AWS_REGION=us-east-1   uv run python -m agent.server
+uv run --env-file .env python -m agent.server
 ```
 With `DATABASE_URL` set, searches use PostGIS and every run is saved to `trips`; without it,
 the seed CSVs are searched in memory. Rate limit: 10 plans per IP per hour.
@@ -70,7 +71,7 @@ Guardrails that ran on every change:
   a pinned action ([ADR-004](docs/adr/004-evals-merge-gate-and-tracing.md)).
 
 ### What the agent can and can't do
-The planner (Claude on Bedrock, [ADR-007](docs/adr/007-agent-loop-bedrock-converse.md)) only
+The planner (OpenAI GPT-6 Luna, [ADR-007](docs/adr/007-agent-loop-bedrock-converse.md)) only
 chooses places from tool results and writes the words. Drive times, distances and costs are
 filled in by code from the same functions `validate_plan` checks, and a plan is returned only
 after `validate_plan` passes, with every ID checked against the IDs the tools returned in that
@@ -99,7 +100,8 @@ rules at 95%.
 ### Not done yet (honest status)
 - Evals don't run in CI yet: the runner works locally (`python -m evals.runner`), and the
   baseline `evals/results/main.json` is recorded after the first live run.
-- Cost per plan isn't tracked until the Bedrock price for the model is confirmed.
+- Bedrock is wired but blocked for Anthropic models on our AWS account, so the planner runs on
+  OpenAI for now (ADR-007 amendment).
 
 
 **Merge process, stated openly:** branch protection requires pull requests and passing status checks (CI, plus evals when the agent, prompts or evals change), but **not** an approving review. GitHub doesn't let a PR author approve their own PR, and Adam is the only human on the project. Adam is the only one who merges and leaves a written review comment on every PR. The AI code review (OpenAI Codex) is advisory. See [ADR-004](docs/adr/004-evals-merge-gate-and-tracing.md).

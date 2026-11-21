@@ -44,3 +44,17 @@ runs the loop:
   `trips` row. Cost per plan stays empty until the Bedrock price for the model is confirmed.
 - Tests: `agent/tests/test_planner.py` covers the loop with a fake model; live behaviour is
   measured by the eval suite (`evals.runner --planner agent.planner:plan_for_eval`).
+
+## Amendment (2026-11-20): OpenAI GPT-6 Luna as the default model
+- **Context:** the AWS account returns "not available for this account" for Anthropic models on
+  Bedrock, an account-level block that needs an AWS Support case (days). The demo is today.
+- **Options:** wait for AWS Support; the Anthropic API directly; the OpenAI API.
+- **Decision (Adam):** OpenAI, model `gpt-6-luna` (OpenAI's model page lists function calling;
+  the Responses API is recommended for it). `OpenAIClient` in `agent/llm.py` calls
+  `POST /v1/responses` over plain HTTPS (no new dependency) and maps it to and from the
+  Converse-shaped messages, so the loop is unchanged. Reasoning items are replayed between
+  turns. `DETOUR_REASONING_EFFORT` defaults to `low` for latency.
+  `DETOUR_PROVIDER=bedrock` still selects `BedrockClient`.
+- **Consequences:** key `OPENAI_API_KEY` in the local `.env` (never committed). Cost per plan is
+  now tracked from the published price ($0.10 / $0.50 per 1M input / output tokens, read
+  2026-11-20). The prompt was written for Claude; eval results decide whether it needs a v2.

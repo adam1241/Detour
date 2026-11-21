@@ -7,7 +7,8 @@ POST /api/plan   {text, vehicle?, budget_usd?, max_drive_minutes?, previous_plan
                   replan_from_day?} -> Server-Sent Events: progress..., then plan or error
 
 --sample replays a fixed, validated plan through the same loop and validation (no AWS).
-Live mode needs DETOUR_MODEL_ID and AWS credentials (ADR-007). Each run is saved to `trips`
+Live mode needs OPENAI_API_KEY (default provider) or DETOUR_PROVIDER=bedrock with AWS
+credentials (ADR-007). Each run is saved to `trips`
 when DATABASE_URL is set. Rate limit: 10 plans per IP per hour (spec §6).
 """
 
@@ -24,7 +25,7 @@ from pathlib import Path
 from typing import Any
 
 from agent.hydrate import hydrate
-from agent.llm import BedrockClient, ModelClient
+from agent.llm import ModelClient, make_model
 from agent.planner import PlanResult, TripRequest, default_backends, plan_trip
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -135,6 +136,7 @@ def save_trip(request: TripRequest, result: PlanResult) -> None:
         "violations": result.violations,
         "first_progress_s": result.first_progress_s,
         "latency_s": result.latency_s,
+        "cost_usd": result.cost_usd,
     }
     vehicle = request.vehicle or (result.plan or {}).get("vehicle") or "car"
     try:
@@ -245,7 +247,7 @@ def main(argv: list[str] | None = None) -> None:
         def factory() -> ModelClient:
             return SampleModel(plan)
     else:
-        client = BedrockClient()
+        client = make_model()
 
         def factory() -> ModelClient:
             return client

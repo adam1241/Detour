@@ -61,7 +61,8 @@ Python 3.12 via `uv` (ADR-001). TypeScript tooling arrives with the web app on D
 | Apply migrations | `DATABASE_URL=postgresql://... uv run python -m db.migrate` |
 | Load seed data | `DATABASE_URL=postgresql://... uv run python -m db.seed.load_seed` |
 | Rebuild cached corridor route (network, run rarely) | `uv run python scripts/build_corridor.py` |
-| Live agent config | `DETOUR_MODEL_ID=<bedrock id> AWS_PROFILE=detour AWS_REGION=us-east-1` (ADR-007) |
+| Live agent (OpenAI, default) | `OPENAI_API_KEY` in `.env`, then `uv run --env-file .env python -m agent.server` (ADR-007) |
+| Live agent (Bedrock) | `DETOUR_PROVIDER=bedrock DETOUR_MODEL_ID=<bedrock id> AWS_PROFILE=detour AWS_REGION=us-east-1` |
 | Demo server (sample, no AWS) | `uv run python -m agent.server --sample` then open http://127.0.0.1:8000 |
 | Rebuild demo sample plan | `uv run python -m scripts.build_sample_plan` |
 | Run evals | `uv run python -m evals.runner --planner module:function [--seed-catalog]` (writes `evals/results/<sha>.json` + `.md`; exit 1 if the gate fails) |
