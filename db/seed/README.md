@@ -70,3 +70,23 @@ Geocoding match per stop is in `sources/stops_geocoded.json`: `place` (the venue
 - `hotels.csv`: `id,name,brand_segment,lon,lat,price_usd,points_per_night,amenities,source,source_url` (amenities `;`-separated)
 - `stops.csv`: `id,name,type,lon,lat,overnight_ok,est_cost_usd,description,source,source_url` (`overnight_ok` is `true`/`false`)
 - IDs: `hotel_<snake>` / `stop_<snake>`. Points must fall inside the corridor bbox (lon −83.0 to −76.8, lat 35.3 to 39.2).
+
+## Imported places (ADR-008, nationwide)
+Real places outside the hand-sourced corridor come from two open sources. They are rebuilt by
+script into `db/seed/imported/` (git-ignored: publishing them would make the repo an ODbL
+derived database) and **never carry prices**: prices only come from a fetched page.
+
+| Source | Script | What | Licence |
+|---|---|---|---|
+| OpenStreetMap (Overpass API) | `uv run python -m db.seed.import_osm [--states CO UT]` | Choice-brand hotels (`brand=` Comfort Inn, Quality Inn, Sleep Inn, Econo Lodge, Cambria and others, mapped to segments like the seed rows) and named wineries, breweries, museums and farms | ODbL 1.0, "© OpenStreetMap contributors" |
+| Recreation.gov RIDB | `RIDB_API_KEY=... uv run python -m db.seed.import_ridb [--states CO UT]` | Federal campgrounds whose listing mentions RV sites (type `campground`, `overnight_ok = true`) | US public domain |
+
+- One Overpass query per state and kind (about 100 for a full run, with 5 s pauses), well
+  inside the public server's fair-use guidance (about 10,000 queries/day).
+- OSM wineries, farms and breweries are **daytime stops only** (`overnight_ok = false`): OSM
+  doesn't say whether a place hosts RVs.
+- Every row has `source_ref` (`osm:node/123`, `ridb:facility/456`), a `source_url` to the
+  upstream record, and its `licence`. Counts per state and type go to `counts_osm.md` /
+  `counts_ridb.md`.
+- Imported rows are not loaded into the shared database until the planner handles unpriced
+  places (nationwide plan, PR 5).
