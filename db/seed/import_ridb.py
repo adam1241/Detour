@@ -13,7 +13,6 @@ from __future__ import annotations
 import argparse
 import os
 import re
-import string
 import sys
 import time
 from collections import Counter
@@ -30,9 +29,27 @@ PAUSE_S = 0.2
 RV = re.compile(r"\bRVs?\b")
 
 
+ACRONYMS = {"CG", "OHV", "RV", "RVS", "NF", "NRA", "BLM", "COE", "USFS", "II", "III", "IV"}
+WORD = re.compile(r"[A-Za-z][A-Za-z']*")
+
+
 def _name(raw: str) -> str:
-    raw = raw.strip()
-    return string.capwords(raw.lower()) if raw.isupper() else raw
+    """Title-case RIDB's all-caps names, keeping acronyms and state codes in parentheses."""
+    raw = " ".join(raw.split())
+    if not raw.isupper():
+        return raw
+
+    def fix(match: re.Match[str]) -> str:
+        word = match.group(0)
+        if word in ACRONYMS:
+            return "RVs" if word == "RVS" else word
+        before, after = raw[: match.start()], raw[match.end() :]
+        in_parens = before.count("(") > before.count(")")
+        if in_parens and word in STATES and not WORD.search(after.split(")")[0]):
+            return word  # "(PICKENSVILLE AL)" keeps AL
+        return word.capitalize()
+
+    return WORD.sub(fix, raw)
 
 
 def campground_rows(records: Iterable[dict[str, Any]]) -> list[StopRow]:

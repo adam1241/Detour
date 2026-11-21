@@ -168,3 +168,12 @@ def test_osm_fetch_uses_the_cache_without_network(tmp_path: Any, monkeypatch: An
 
     monkeypatch.setattr(import_osm, "http_json", no_network)
     assert import_osm.fetch("CO", "hotels", tmp_path) == [{"id": 1}]
+
+
+def test_ridb_names_are_title_cased_keeping_acronyms_and_states() -> None:
+    from db.seed.import_ridb import _name
+
+    assert _name("PICKENSVILLE CG (PICKENSVILLE AL)") == "Pickensville CG (Pickensville AL)"
+    assert _name("ALTO PIT OHV CAMPGROUND") == "Alto Pit OHV Campground"
+    assert _name("BEAR'S DEN  RV PARK") == "Bear's Den RV Park"
+    assert _name("Kaibab Lake Sites") == "Kaibab Lake Sites"  # mixed case kept as is
