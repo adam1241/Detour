@@ -11,3 +11,6 @@ PR_DESCRIPTION.md
 .pytest_cache/
 .ruff_cache/
 .envrc
+
+# Imported OSM/RIDB data (ADR-008): rebuilt by scripts, not committed (ODbL derived data).
+db/seed/imported/
