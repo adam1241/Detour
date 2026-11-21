@@ -25,6 +25,7 @@ from db.seed.load_seed import (
 
 # Imported data stays out of git: publishing it would make the repo an ODbL derived database.
 OUT_DIR = Path(__file__).resolve().parent / "imported"
+BACKOFF_S = 15.0
 USER_AGENT = "Detour-poc-importer/1.0 (one-time build of a proof-of-concept dataset)"
 
 # Contiguous US states plus DC (ADR-008 scope).
@@ -93,7 +94,8 @@ def http_json(
     headers: dict[str, str] | None = None,
     retries: int = 4,
 ) -> Any:
-    """GET (or form POST when `data` is given) JSON, retrying 429/5xx with backoff."""
+    """GET (or form POST when `data` is given) JSON, retrying 429/5xx, timeouts and dropped
+    connections with backoff."""
     body = urllib.parse.urlencode(data).encode() if data is not None else None
     request_headers = {"User-Agent": USER_AGENT, **(headers or {})}
     for attempt in range(retries + 1):
@@ -103,9 +105,14 @@ def http_json(
                 return json.loads(resp.read())
         except urllib.error.HTTPError as err:
             if err.code in (429, 500, 502, 503, 504) and attempt < retries:
-                time.sleep(15 * (attempt + 1))
+                time.sleep(BACKOFF_S * (attempt + 1))
                 continue
             raise RuntimeError(f"{url}: HTTP {err.code}") from None
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as err:
+            if attempt < retries:
+                time.sleep(BACKOFF_S * (attempt + 1))
+                continue
+            raise RuntimeError(f"{url}: {err}") from None
     raise RuntimeError(f"{url}: retries exhausted")
 
 

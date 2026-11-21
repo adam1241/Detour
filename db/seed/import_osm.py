@@ -11,6 +11,7 @@ Data: (c) OpenStreetMap contributors, ODbL 1.0.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 import time
 from collections import Counter
@@ -150,9 +151,19 @@ def stop_rows(elements: Iterable[dict[str, Any]]) -> list[StopRow]:
     return list(rows.values())
 
 
-def fetch(state: str, kind: str) -> list[dict[str, Any]]:
+def fetch(state: str, kind: str, cache_dir: Path) -> list[dict[str, Any]]:
+    """Overpass elements for one state and kind, cached on disk so a rerun resumes."""
+    cache = cache_dir / f"osm_{state}_{kind}.json"
+    if cache.exists():
+        cached: list[dict[str, Any]] = json.loads(cache.read_text(encoding="utf-8"))
+        return cached
     data = http_json(OVERPASS_URL, data={"data": overpass_query(state, kind)})
     elements: list[dict[str, Any]] = data.get("elements", [])
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    tmp = cache.with_suffix(".tmp")
+    tmp.write_text(json.dumps(elements), encoding="utf-8")
+    tmp.replace(cache)
+    time.sleep(PAUSE_S)  # only after a real request
     return elements
 
 
@@ -167,7 +178,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     counts: Counter[tuple[str, str]] = Counter()
     for state in args.states:
         for kind in ("hotels", "stops"):
-            elements = fetch(state, kind)
+            elements = fetch(state, kind, args.out / "cache")
             if kind == "hotels":
                 new_hotels = [h for h in hotel_rows(elements) if h.source_ref not in hotels]
                 hotels.update({h.source_ref or h.id: h for h in new_hotels})
@@ -178,7 +189,6 @@ def main(argv: Sequence[str] | None = None) -> int:
                 for s in new_stops:
                     counts[(state, s.type)] += 1
             print(f"{state} {kind}: {len(elements)} elements", flush=True)
-            time.sleep(PAUSE_S)
 
     hotel_list, stop_list = list(hotels.values()), list(stops.values())
     errors = validate(hotel_list, stop_list)

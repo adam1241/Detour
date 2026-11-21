@@ -133,3 +133,38 @@ def test_ridb_rv_mention_can_come_from_keywords() -> None:
         [facility("7", FacilityDescription="Tent sites.", Keywords="RV,camping")]
     )
     assert row.id == "stop_ridb_7"
+
+
+def test_http_json_retries_timeouts_then_succeeds(monkeypatch: Any) -> None:
+    import io
+    import urllib.error
+    import urllib.request
+
+    from db.seed import import_common
+
+    calls = {"n": 0}
+
+    def flaky(req: Any, timeout: float) -> Any:
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise urllib.error.URLError(TimeoutError("timed out"))
+        return io.BytesIO(b'{"ok": true}')
+
+    monkeypatch.setattr(urllib.request, "urlopen", flaky)
+    monkeypatch.setattr(import_common, "BACKOFF_S", 0)
+    assert import_common.http_json("https://example.com/x") == {"ok": True}
+    assert calls["n"] == 3
+
+
+def test_osm_fetch_uses_the_cache_without_network(tmp_path: Any, monkeypatch: Any) -> None:
+    import json
+
+    from db.seed import import_osm
+
+    (tmp_path / "osm_CO_hotels.json").write_text(json.dumps([{"id": 1}]), encoding="utf-8")
+
+    def no_network(*a: Any, **k: Any) -> Any:
+        raise AssertionError("should not call the network")
+
+    monkeypatch.setattr(import_osm, "http_json", no_network)
+    assert import_osm.fetch("CO", "hotels", tmp_path) == [{"id": 1}]
