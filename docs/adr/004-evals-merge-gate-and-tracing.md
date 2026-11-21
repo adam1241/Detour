@@ -71,3 +71,18 @@ Spec §8.1 gates merges on eval scores and on comparison with `main`. Problems t
 - Changing thresholds, tolerance or the eval trigger paths needs Adam's approval (CLAUDE.md).
 - Eval cost per run is measured on Day 2 and added here.
 - Without required approvals, the "human approval" guarantee rests on process (only Adam merges, written review on every PR), not on GitHub enforcement. The README says this plainly.
+
+## Implementation note (2026-11-21): evals in CI
+- Workflow `.github/workflows/evals.yml`, job `evals`. It **always runs** so it can be a
+  required check; when a PR changes nothing under `agent/`, `prompts/`, `evals/` or
+  `packages/schema/` (the plan contract the checks depend on), it passes in seconds without
+  calling the model. Manual runs via `workflow_dispatch`.
+- The planner runs on OpenAI GPT-6 Luna (ADR-007 amendment) with the seed CSVs in memory
+  (`--seed-catalog`), so CI needs no database. Key: `OPENAI_API_KEY` in the `evals`
+  GitHub environment, a separate spend-limited key. A full run costs about $0.06.
+- The baseline is `evals/results/main.json` from the PR's base commit, so a PR can't move
+  its own goalposts. It is refreshed by committing a new `main.json` in a PR that ran evals.
+- Results: the Markdown table goes to the job summary and one PR comment updated on each run;
+  the JSON is uploaded as the `eval-results` artifact.
+- Model runs aren't deterministic: a single flaky case can fail a 100% check. Re-run the job
+  before changing anything.
