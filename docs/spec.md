@@ -7,6 +7,7 @@
 > **Note:** Unofficial proof of concept. Not affiliated with or endorsed by Choice Hotels International or Harvest Hosts. All hotel and host data in this repo is a hand-curated *sample* from public information, with a source URL on every row. Host places are **example host-style stops**: we never claim that a business is a Harvest Hosts member. No logos or trademarks are used as branding.
 
 ### Changelog
+- **v0.7 (2026-11-21):** ADR-008 accepted: coverage will grow from the one corridor to the contiguous US (OpenStreetMap and RIDB places, OpenRouteService routing, nullable prices shown as "price not available"). Until the PRs in [docs/plans/nationwide.md](plans/nationwide.md) land, the product still covers the corridor only.
 - **v0.6 (2026-11-21):** Prompt `planner.v2` (keep the requested trip, spread driving before breaking a limit, never ask questions). The loop sends back once a plan that passes only because a warning excuses a broken limit, with each day's drive time and a per-day target when the trip fits on average; a text reply after that challenge confirms the plan. "Cheaper" replans are soft requests (no hard budget). First live baseline in `evals/results/main.json`.
 - **v0.5 (2026-11-20):** Planner model switched to OpenAI GPT-6 Luna (`gpt-6-luna`, Responses API with function calling) because the AWS account is blocked from Anthropic models on Bedrock. The Bedrock client stays and can be selected with `DETOUR_PROVIDER=bedrock` (ADR-007 amendment).
 - **v0.4 (2026-11-20):** Agent loop on the Bedrock Converse API instead of Strands (ADR-007). Drive times, distances and totals in a plan are filled in by code from the tools; the model drafts the structure. Final-day cut-line: the agent runs locally (no AgentCore), and the demo is a local page instead of a Vercel deploy.
@@ -202,6 +203,7 @@ Tracing: every run logs tool calls, order, latency, tokens, cost, prompt_version
 - [ADR-005](adr/005-web-app-map-and-agent-invocation.md): Vercel Hobby, server-side SigV4 calls to AgentCore, streamed progress, MapLibre, plan hydration, per-IP rate limit.
 - [ADR-006](adr/006-database-migrations.md): plain numbered SQL migrations with a small tested runner (`db/migrate.py`); fix forward, no down-migrations.
 - [ADR-007](adr/007-agent-loop-bedrock-converse.md): own tool-use loop (Converse-shaped), plan returned only through `validate_plan`, numbers filled from tools; amended: OpenAI GPT-6 Luna by default, Bedrock selectable.
+- [ADR-008](adr/008-nationwide-coverage.md): nationwide coverage from OpenStreetMap and RIDB places, OpenRouteService routing, prices only where sourced; plan in [docs/plans/nationwide.md](plans/nationwide.md).
 
 ---
 

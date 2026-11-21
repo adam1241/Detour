@@ -8,90 +8,154 @@
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <style>
   :root {
-    --bg: #f6f4ef; --panel: #fffdf8; --ink: #1f2a24; --muted: #66706a; --line: #e3ded3;
-    --accent: #2f6b4f; --accent-ink: #fff; --warn: #9a5b00; --warn-bg: #fff4e0;
-    --d1: #2f6b4f; --d2: #c0692a; --d3: #3a5f9e; --d4: #8a3f8f; --d5: #6b7a1f; --d6: #9e3a3a;
+    --bg: #f4f5f2; --card: #ffffff; --ink: #15201b; --muted: #6b746f; --line: #e6e8e3;
+    --accent: #1f6f4e; --accent-soft: #e5f1eb; --warn: #8a5300; --warn-soft: #fff3df;
+    --err: #9b1c1c; --err-soft: #fdecec; --radius: 14px;
+    --shadow: 0 1px 2px rgb(20 30 25 / 6%), 0 8px 24px rgb(20 30 25 / 6%);
+    --d1: #1f6f4e; --d2: #d0662a; --d3: #3563b8; --d4: #8c3f96; --d5: #6d7f17; --d6: #b23a48;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
-         color: var(--ink); background: var(--bg); }
-  .app { display: grid; grid-template-columns: minmax(360px, 460px) 1fr; height: 100vh; }
-  aside { overflow-y: auto; padding: 20px 22px 40px; background: var(--panel);
-          border-right: 1px solid var(--line); }
-  #map { height: 100vh; }
-  h1 { font-size: 22px; margin: 0 0 2px; letter-spacing: -0.01em; }
-  .tag { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
-  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
-  textarea, select, input { width: 100%; font: inherit; color: inherit; padding: 9px 10px;
-          border: 1px solid var(--line); border-radius: 8px; background: #fff; }
-  textarea { min-height: 76px; resize: vertical; }
-  .row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-  button { font: inherit; border: 0; border-radius: 8px; padding: 10px 14px; cursor: pointer;
-           background: var(--accent); color: var(--accent-ink); font-weight: 600; }
-  button.ghost { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
-  button:disabled { opacity: .5; cursor: wait; }
-  .go { width: 100%; margin-top: 14px; }
-  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .examples button { background: transparent; color: var(--accent); padding: 3px 8px;
-                     font-weight: 500; font-size: 13px; border: 1px dashed var(--line); }
-  #progress { list-style: none; padding: 0; margin: 16px 0 0; font-size: 14px; color: var(--muted); }
-  #progress li::before { content: "✓ "; color: var(--accent); }
-  #progress li:last-child::before { content: "… "; }
-  #progress.done li:last-child::before { content: "✓ "; }
-  .error { background: #fdecec; color: #8a1f1f; padding: 10px 12px; border-radius: 8px; margin-top: 14px; }
-  .summary { margin: 18px 0 10px; font-size: 16px; }
-  .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
-  .stat { background: var(--bg); border-radius: 8px; padding: 8px 10px; }
-  .stat b { display: block; font-size: 18px; }
+  body { margin: 0; font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+         color: var(--ink); background: var(--bg); -webkit-font-smoothing: antialiased; }
+  .app { display: grid; grid-template-columns: minmax(380px, 470px) 1fr; height: 100vh; }
+  aside { overflow-y: auto; padding: 22px 22px 32px; display: flex; flex-direction: column; gap: 14px; }
+  .mapwrap { padding: 14px 14px 14px 0; height: 100vh; }
+  #map { height: 100%; border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+
+  header { display: flex; align-items: center; gap: 10px; }
+  .logo { width: 34px; height: 34px; border-radius: 10px; background: var(--accent); display: grid;
+          place-items: center; color: #fff; font-weight: 800; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: -0.02em; }
+  .sub { margin: 0; color: var(--muted); font-size: 13px; }
+
+  .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; }
+  label, .label { display: block; font-size: 12px; font-weight: 600; color: var(--muted);
+                  text-transform: uppercase; letter-spacing: .04em; margin: 0 0 6px; }
+  textarea, input, select { width: 100%; font: inherit; color: inherit; padding: 10px 12px;
+          border: 1px solid var(--line); border-radius: 10px; background: #fbfbfa; transition: border .15s; }
+  textarea:focus, input:focus, select:focus { outline: none; border-color: var(--accent); background: #fff; }
+  textarea { min-height: 84px; resize: vertical; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 14px; }
+  .chip { font: inherit; font-size: 13px; padding: 5px 10px; border-radius: 99px; cursor: pointer;
+          border: 1px solid var(--line); background: #fff; color: var(--ink); }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .seg { display: flex; background: #f0f1ee; border-radius: 10px; padding: 3px; }
+  .seg button { flex: 1; font: inherit; font-size: 14px; border: 0; background: transparent; padding: 7px 0;
+                border-radius: 8px; cursor: pointer; color: var(--muted); }
+  .seg button[aria-pressed="true"] { background: #fff; color: var(--ink); font-weight: 600;
+                                     box-shadow: 0 1px 2px rgb(0 0 0 / 10%); }
+  .full { grid-column: 1 / -1; }
+  .primary { width: 100%; margin-top: 14px; font: inherit; font-weight: 600; border: 0; cursor: pointer;
+             padding: 12px; border-radius: 10px; background: var(--accent); color: #fff; transition: filter .15s; }
+  .primary:hover { filter: brightness(1.08); }
+  button:disabled { opacity: .55; cursor: progress; }
+
+  #progress { list-style: none; margin: 0; padding: 0; font-size: 14px; color: var(--muted); }
+  #progress:empty { display: none; }
+  #progress li { display: flex; gap: 8px; align-items: center; padding: 2px 0; }
+  #progress li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+  #progress li:last-child::before { animation: pulse 1s infinite; }
+  #progress.done li:last-child::before { animation: none; }
+  @keyframes pulse { 50% { opacity: .25; } }
+
+  .note { padding: 10px 12px; border-radius: 10px; font-size: 14px; }
+  .note.warn { background: var(--warn-soft); color: var(--warn); }
+  .note.err { background: var(--err-soft); color: var(--err); }
+  .summary { font-size: 16px; margin: 0 0 12px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { background: #f6f7f4; border-radius: 10px; padding: 10px; }
+  .stat b { display: block; font-size: 19px; letter-spacing: -0.01em; }
   .stat span { font-size: 12px; color: var(--muted); }
-  .warn { background: var(--warn-bg); color: var(--warn); padding: 8px 12px; border-radius: 8px;
-          margin: 6px 0; font-size: 14px; }
-  .day { border: 1px solid var(--line); border-left: 5px solid var(--c); border-radius: 10px;
-         padding: 12px 14px; margin: 10px 0; background: #fff; }
-  .day h3 { margin: 0 0 4px; font-size: 15px; display: flex; justify-content: space-between; }
-  .day h3 small { color: var(--muted); font-weight: 400; }
-  .day p { margin: 6px 0; }
-  .item { display: flex; gap: 8px; margin: 6px 0; font-size: 14px; }
-  .pill { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; border-radius: 99px;
-          padding: 2px 7px; height: fit-content; white-space: nowrap; background: var(--bg); color: var(--muted); }
+
+  .day { position: relative; padding: 14px 16px 14px 20px; }
+  .day::before { content: ""; position: absolute; left: 0; top: 14px; bottom: 14px; width: 4px;
+                 border-radius: 0 4px 4px 0; background: var(--c); }
+  .day h3 { margin: 0 0 4px; font-size: 15px; display: flex; justify-content: space-between; align-items: baseline; }
+  .day h3 small { color: var(--muted); font-weight: 500; font-size: 13px; }
+  .day p { margin: 4px 0 8px; }
+  .item { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .pill { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; border-radius: 99px;
+          padding: 2px 8px; height: fit-content; white-space: nowrap; background: #f0f1ee; color: var(--muted); }
   .pill.hotel { background: #e6eefb; color: #2a4c8a; }
-  .pill.host { background: #e7f3ec; color: #2f6b4f; }
+  .pill.host { background: var(--accent-soft); color: var(--accent); }
   .muted { color: var(--muted); font-size: 13px; }
-  .replan { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
-  .replan .btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-  footer { margin-top: 24px; font-size: 12px; color: var(--muted); }
-  @media (max-width: 860px) { .app { grid-template-columns: 1fr; height: auto; }
-    #map { height: 55vh; order: -1; } }
+
+  .replan .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .replan select { width: auto; padding: 6px 10px; }
+  .ghost { font: inherit; font-size: 14px; padding: 7px 12px; border-radius: 99px; cursor: pointer;
+           border: 1px solid var(--accent); background: #fff; color: var(--accent); }
+  .ghost:hover { background: var(--accent-soft); }
+
+  footer { font-size: 12px; color: var(--muted); margin-top: auto; }
+
+  /* Tooltip: one floating element, shown on hover and keyboard focus of any [data-tip]. */
+  #tip { position: fixed; z-index: 1000; max-width: 260px; padding: 7px 10px; border-radius: 8px;
+         background: #15201b; color: #fff; font-size: 12.5px; line-height: 1.4; pointer-events: none;
+         opacity: 0; transform: translateY(4px); transition: opacity .12s, transform .12s; }
+  #tip.show { opacity: 1; transform: none; }
+
+  @media (max-width: 880px) {
+    .app { grid-template-columns: 1fr; height: auto; }
+    .mapwrap { padding: 0 14px; order: -1; height: 50vh; }
+  }
 </style>
 </head>
 <body>
 <div class="app">
   <aside>
-    <h1>Detour</h1>
-    <p class="tag">Road trips from DC to Asheville that mix hotel nights with farm and winery stops.</p>
+    <header>
+      <div class="logo" aria-hidden="true">D</div>
+      <div>
+        <h1>Detour</h1>
+        <p class="sub">Washington, DC ↔ Asheville road trips mixing hotel nights with farm and winery stops</p>
+      </div>
+    </header>
 
-    <form id="form">
-      <label for="text">Describe your trip</label>
-      <textarea id="text" required maxlength="1000">DC to Asheville, 4 days, under $600, in our RV. We love farms and wineries.</textarea>
-      <div class="examples" id="examples">
-        <button type="button" data-v="car" data-t="Weekend from DC to Staunton by car, 2 days, museums please.">Car weekend</button>
-        <button type="button" data-v="rv" data-t="Asheville to DC in 3 days by RV, as cheap as possible.">Northbound RV</button>
-        <button type="button" data-v="car" data-t="Family trip DC to Asheville, 4 days by car, no more than 4 hours of driving a day.">Family, short days</button>
+    <form id="form" class="card">
+      <label for="text">Your trip</label>
+      <textarea id="text" required maxlength="1000"
+        data-tip="Describe the trip in your own words: where, how many days, budget, what you like.">DC to Asheville, 4 days, under $600, in our RV. We love farms and wineries.</textarea>
+      <div class="chips" id="examples">
+        <button type="button" class="chip" data-v="car" data-t="Weekend from DC to Staunton by car, 2 days, museums please."
+          data-tip="Fill in a 2-day car weekend to Staunton">Car weekend</button>
+        <button type="button" class="chip" data-v="rv" data-t="Asheville to DC in 3 days by RV, as cheap as possible."
+          data-tip="Fill in a cheap 3-day RV trip heading north">Northbound RV</button>
+        <button type="button" class="chip" data-v="car" data-h="240" data-t="Family trip DC to Asheville, 4 days by car, no more than 4 hours of driving a day."
+          data-tip="Fill in a 4-day family trip with at most 4 hours of driving a day">Family, short days</button>
       </div>
-      <div class="row">
-        <div><label for="vehicle">Vehicle</label>
-          <select id="vehicle"><option value="rv">RV</option><option value="car">Car</option></select></div>
-        <div><label for="budget">Lodging budget $</label>
-          <input id="budget" type="number" min="1" step="1" placeholder="none"></div>
-        <div><label for="maxdrive">Max drive/day</label>
-          <select id="maxdrive"><option value="300">5 h</option><option value="240">4 h</option>
-            <option value="360">6 h</option><option value="180">3 h</option></select></div>
+
+      <div class="grid3">
+        <div>
+          <span class="label">Vehicle</span>
+          <div class="seg" id="vehicle" role="group" aria-label="Vehicle">
+            <button type="button" data-value="rv" aria-pressed="true"
+              data-tip="RV: nights can be at farm or winery host stops as well as hotels">RV</button>
+            <button type="button" data-value="car" aria-pressed="false"
+              data-tip="Car: every night is in a hotel">Car</button>
+          </div>
+        </div>
+        <div>
+          <label for="budget">Lodging budget</label>
+          <input id="budget" type="number" min="1" step="1" placeholder="No limit"
+            data-tip="Optional cap on total lodging cash for the whole trip, in USD. Points don't count.">
+        </div>
+        <div class="full">
+          <span class="label">Max driving per day</span>
+          <div class="seg" id="maxdrive" role="group" aria-label="Max driving per day">
+            <button type="button" data-value="180" aria-pressed="false" data-tip="At most 3 hours behind the wheel each day">3 h</button>
+            <button type="button" data-value="240" aria-pressed="false" data-tip="At most 4 hours behind the wheel each day">4 h</button>
+            <button type="button" data-value="300" aria-pressed="true" data-tip="At most 5 hours behind the wheel each day">5 h</button>
+            <button type="button" data-value="360" aria-pressed="false" data-tip="At most 6 hours behind the wheel each day">6 h</button>
+          </div>
+        </div>
       </div>
-      <button class="go" id="go" type="submit">Plan my trip</button>
+      <button class="primary" id="go" type="submit"
+        data-tip="Build a day-by-day plan from real places and prices. Takes about 15 seconds.">Plan my trip</button>
     </form>
 
-    <ul id="progress"></ul>
-    <div id="result"></div>
+    <ul id="progress" aria-live="polite"></ul>
+    <div id="result" style="display:flex;flex-direction:column;gap:12px"></div>
 
     <footer>
       Unofficial proof of concept with a hand-curated <b>sample</b> of public data (source URL on
@@ -100,18 +164,38 @@
       closures before you go. Map © OpenStreetMap contributors.
     </footer>
   </aside>
-  <div id="map"></div>
+  <div class="mapwrap"><div id="map"></div></div>
 </div>
+<div id="tip" role="tooltip"></div>
 
 <script>
 const DAY_COLORS = ["--d1", "--d2", "--d3", "--d4", "--d5", "--d6"].map(
   v => getComputedStyle(document.documentElement).getPropertyValue(v).trim());
 const $ = id => document.getElementById(id);
-let current = null;  // last hydrated response: {plan, places, route_geojson}
-let request = null;  // last request body
+let current = null;      // last hydrated response: {plan, places, route_geojson}
+let request = null;      // last request body
 let markers = [];
 let cheaperThan = null;  // cash total a "Cheaper" replan must beat
 
+// --- Tooltips ---------------------------------------------------------------------------
+const tip = $("tip");
+function showTip(target) {
+  const text = target.dataset.tip; if (!text) return;
+  tip.textContent = text; tip.classList.add("show");
+  target.setAttribute("aria-describedby", "tip");
+  const r = target.getBoundingClientRect(), t = tip.getBoundingClientRect();
+  let top = r.top - t.height - 8;
+  if (top < 8) top = r.bottom + 8;
+  const left = Math.min(Math.max(8, r.left + r.width / 2 - t.width / 2), innerWidth - t.width - 8);
+  tip.style.top = `${top}px`; tip.style.left = `${left}px`;
+}
+function hideTip(target) { tip.classList.remove("show"); target?.removeAttribute?.("aria-describedby"); }
+for (const [on, off] of [["mouseover", "mouseout"], ["focusin", "focusout"]]) {
+  document.addEventListener(on, e => { const t = e.target.closest?.("[data-tip]"); if (t) showTip(t); });
+  document.addEventListener(off, e => { const t = e.target.closest?.("[data-tip]"); if (t) hideTip(t); });
+}
+
+// --- Map --------------------------------------------------------------------------------
 const map = new maplibregl.Map({
   container: "map",
   style: {
@@ -124,32 +208,42 @@ const map = new maplibregl.Map({
   center: [-79.8, 37.3], zoom: 6,
 });
 map.addControl(new maplibregl.NavigationControl(), "top-right");
+map.once("load", () => map.resize());
 
+// --- Helpers ----------------------------------------------------------------------------
 function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {
     if (k === "class") node.className = v; else if (k === "style") node.style.cssText = v;
-    else node.setAttribute(k, v);
+    else if (k === "tip") node.dataset.tip = v; else node.setAttribute(k, v);
   }
   for (const c of children) if (c != null) node.append(c);  // text via append: no HTML injection
   return node;
 }
 const money = n => "$" + Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
 const hours = m => `${Math.floor(m / 60)} h ${String(Math.round(m % 60)).padStart(2, "0")}`;
+const segValue = id => $(id).querySelector('[aria-pressed="true"]').dataset.value;
+function setSeg(id, value) {
+  for (const b of $(id).querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.dataset.value === value));
+}
+for (const id of ["vehicle", "maxdrive"]) {
+  $(id).addEventListener("click", e => { const b = e.target.closest("button"); if (b) setSeg(id, b.dataset.value); });
+}
 
 $("examples").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
-  $("text").value = b.dataset.t; $("vehicle").value = b.dataset.v;
+  $("text").value = b.dataset.t; setSeg("vehicle", b.dataset.v); setSeg("maxdrive", b.dataset.h || "300");
 });
 
 $("form").addEventListener("submit", e => {
   e.preventDefault();
-  const body = { text: $("text").value, vehicle: $("vehicle").value,
-                 max_drive_minutes: Number($("maxdrive").value) };
+  const body = { text: $("text").value, vehicle: segValue("vehicle"),
+                 max_drive_minutes: Number(segValue("maxdrive")) };
   if ($("budget").value) body.budget_usd = Number($("budget").value);
   run(body);
 });
 
+// --- Planner call (Server-Sent Events) -----------------------------------------------------
 async function run(body) {
   request = body;
   if (!body.previous_plan) cheaperThan = null;
@@ -183,29 +277,33 @@ function handle(ev) {
   else if (ev.type === "plan") {
     $("progress").classList.add("done"); current = ev; render(ev);
     if (cheaperThan !== null && ev.plan.totals.cash_usd >= cheaperThan) {
-      $("result").prepend(el("div", { class: "warn" },
+      $("result").prepend(el("div", { class: "note warn" },
         `No cheaper option was found in the sample data; lodging stays at ${money(ev.plan.totals.cash_usd)}.`));
     }
-  }
-  else if (ev.type === "error") {
+  } else if (ev.type === "error") {
     const detail = (ev.violations || []).slice(0, 3).map(v => v.message).join("; ");
     showError(`${ev.message || ev.error}${detail ? " (" + detail + ")" : ""}`);
   }
 }
 
-function showError(msg) { $("result").prepend(el("div", { class: "error" }, msg)); }
+function showError(msg) { $("result").prepend(el("div", { class: "note err" }, msg)); }
 function setBusy(b) { document.querySelectorAll("button").forEach(x => x.disabled = b); }
 
+// --- Rendering ----------------------------------------------------------------------------
 function render({ plan, places }) {
-  const t = plan.totals, out = $("result");
-  out.replaceChildren(
-    el("p", { class: "summary" }, plan.summary),
-    el("div", { class: "totals" },
-      el("div", { class: "stat" }, el("b", {}, money(t.cash_usd)), el("span", {}, "lodging, cash")),
-      el("div", { class: "stat" }, el("b", {}, t.points.toLocaleString()), el("span", {}, "points (hotel nights)")),
-      el("div", { class: "stat" }, el("b", {}, `${t.hotel_nights} + ${t.host_nights}`), el("span", {}, "hotel + host nights"))),
-    ...plan.warnings.map(w => el("div", { class: "warn" }, "⚠ " + w)),
-    ...plan.alternatives.map(a => el("div", { class: "warn" }, "→ " + a)),
+  const t = plan.totals;
+  $("result").replaceChildren(
+    el("div", { class: "card" },
+      el("p", { class: "summary" }, plan.summary),
+      el("div", { class: "stats" },
+        el("div", { class: "stat", tip: "Total lodging paid in cash: hotel nightly prices plus host stop fees" },
+          el("b", {}, money(t.cash_usd)), el("span", {}, "lodging, cash")),
+        el("div", { class: "stat", tip: "Points needed if you pay every hotel night with points instead of cash" },
+          el("b", {}, t.points.toLocaleString()), el("span", {}, "or points")),
+        el("div", { class: "stat", tip: "Nights in hotels + nights at farm or winery host stops" },
+          el("b", {}, `${t.hotel_nights} + ${t.host_nights}`), el("span", {}, "hotel + host nights")))),
+    ...plan.warnings.map(w => el("div", { class: "note warn" }, "⚠ " + w)),
+    ...plan.alternatives.map(a => el("div", { class: "note warn" }, "→ " + a)),
     ...plan.days.map(d => dayCard(d, places)),
     replanBox(plan),
   );
@@ -214,13 +312,14 @@ function render({ plan, places }) {
 
 function dayCard(d, places) {
   const color = DAY_COLORS[(d.day - 1) % DAY_COLORS.length];
-  const card = el("div", { class: "day", style: `--c:${color}` },
-    el("h3", {}, `Day ${d.day}`, el("small", {}, `${hours(d.drive_minutes)} · ${Math.round(d.distance_km)} km`)),
+  const card = el("div", { class: "card day", style: `--c:${color}` },
+    el("h3", {}, `Day ${d.day}`, el("small", { tip: "Driving time and distance for this day, side trips included" },
+      `${hours(d.drive_minutes)} · ${Math.round(d.distance_km)} km`)),
     el("p", {}, d.narrative));
   for (const s of d.stops) {
     const p = places[s.id] || { name: s.id };
     const cost = p.est_cost_usd ? ` · about ${money(p.est_cost_usd)}` : "";
-    card.append(el("div", { class: "item" }, el("span", { class: "pill" }, s.type),
+    card.append(el("div", { class: "item" }, el("span", { class: "pill", tip: "A daytime stop along the way" }, s.type),
       el("div", {}, el("b", {}, p.name), el("div", { class: "muted" }, s.reason + cost))));
   }
   if (d.overnight) {
@@ -228,33 +327,37 @@ function dayCard(d, places) {
     const price = o.kind === "hotel"
       ? `${money(p.price_usd)} or ${Number(p.points_per_night).toLocaleString()} pts`
       : `${money(p.est_cost_usd)} RV stay`;
-    card.append(el("div", { class: "item" }, el("span", { class: `pill ${o.kind}` }, o.kind === "hotel" ? "hotel" : "host"),
+    const tipText = o.kind === "hotel" ? "Tonight's hotel: cash price or points per night"
+                                        : "Tonight's host stop: a farm or winery that welcomes RVs";
+    card.append(el("div", { class: "item" }, el("span", { class: `pill ${o.kind}`, tip: tipText }, o.kind === "hotel" ? "hotel" : "host"),
       el("div", {}, el("b", {}, p.name), el("div", { class: "muted" }, `${price} · ${o.reason}`))));
   } else {
-    card.append(el("div", { class: "muted" }, `Arrive in ${current ? current.plan.destination : ""}`));
+    card.append(el("div", { class: "item muted" }, `Arrive in ${current ? current.plan.destination : ""}`));
   }
   return card;
 }
 
 function replanBox(plan) {
-  const from = el("select", { id: "fromday", style: "width:auto" },
+  const from = el("select", { id: "fromday", tip: "Days before this one stay exactly as they are" },
     ...plan.days.map(d => el("option", { value: d.day }, `from day ${d.day}`)));
-  const go = (label, extra) => {
-    const b = el("button", { type: "button", class: "ghost" }, label);
+  const go = (label, tipText, extra) => {
+    const b = el("button", { type: "button", class: "ghost", tip: tipText }, label);
     b.onclick = () => {
       cheaperThan = label === "Cheaper" ? plan.totals.cash_usd : null;
       run({ ...request, ...extra(), previous_plan: plan, replan_from_day: Number(from.value) });
     };
     return b;
   };
-  return el("div", { class: "replan" }, el("b", {}, "Adjust the plan "), from,
-    el("div", { class: "btns" },
+  return el("div", { class: "card replan" }, el("span", { class: "label" }, "Adjust the plan"),
+    el("div", { class: "row" }, from,
       // Soft request: a cheaper plan if one exists, otherwise the same plan with a note.
-      go("Cheaper", () => ({ text: `Make it cheaper: lodging under ${money(plan.totals.cash_usd)} ` +
-        "if possible. If nothing cheaper exists, keep the plan and add a warning saying so." })),
-      go("Shorter days", () => ({ text: "Shorter driving days.",
+      go("Cheaper", "Look for cheaper hotels or host stops. Tells you if nothing cheaper exists.",
+        () => ({ text: `Make it cheaper: lodging under ${money(plan.totals.cash_usd)} ` +
+          "if possible. If nothing cheaper exists, keep the plan and add a warning saying so." })),
+      go("Shorter days", "Lower the daily driving limit by an hour and re-plan", () => ({ text: "Shorter driving days.",
         max_drive_minutes: Math.max(120, Math.min(request.max_drive_minutes || 300, 300) - 60) })),
-      go("More outdoors", () => ({ text: "More outdoors: more farms and wineries, fewer museums." }))));
+      go("More outdoors", "Swap in more farms and wineries, fewer museums",
+        () => ({ text: "More outdoors: more farms and wineries, fewer museums." }))));
 }
 
 function drawMap({ plan, places, route_geojson }) {
@@ -264,7 +367,7 @@ function drawMap({ plan, places, route_geojson }) {
     map.addSource("route", { type: "geojson", data: route_geojson });
     map.addLayer({ id: "route", type: "line", source: "route",
       layout: { "line-cap": "round", "line-join": "round" },
-      paint: { "line-width": 5, "line-opacity": 0.85, "line-color": ["match", ["get", "day"],
+      paint: { "line-width": 5, "line-opacity": 0.9, "line-color": ["match", ["get", "day"],
         ...DAY_COLORS.flatMap((c, i) => [i + 1, c]), DAY_COLORS[0]] } });
     markers.forEach(m => m.remove()); markers = [];
     for (const d of plan.days) {
@@ -272,9 +375,11 @@ function drawMap({ plan, places, route_geojson }) {
                      ...(d.overnight ? [[d.overnight.id, d.overnight.kind]] : [])];
       for (const [id, kind] of items) {
         const p = places[id]; if (!p) continue;
-        const dot = el("div", { style: `width:${kind === "stop" ? 12 : 18}px;height:${kind === "stop" ? 12 : 18}px;` +
-          `border-radius:${kind === "hotel" ? "4px" : "50%"};border:2px solid #fff;box-shadow:0 1px 3px #0006;` +
-          `background:${DAY_COLORS[(d.day - 1) % DAY_COLORS.length]}` });
+        const size = kind === "stop" ? 12 : 18;
+        const dot = el("div", { style: `width:${size}px;height:${size}px;cursor:pointer;` +
+          `border-radius:${kind === "hotel" ? "5px" : "50%"};border:2px solid #fff;box-shadow:0 1px 4px #0005;` +
+          `background:${DAY_COLORS[(d.day - 1) % DAY_COLORS.length]}`,
+          tip: `${p.name}: day ${d.day} ${kind === "stop" ? "stop" : kind + " night"}. Click for details.` });
         const popup = new maplibregl.Popup({ offset: 12 }).setDOMContent(
           el("div", {}, el("b", {}, p.name), el("div", {}, `Day ${d.day} · ${kind}`)));
         markers.push(new maplibregl.Marker({ element: dot }).setLngLat([p.lon, p.lat]).setPopup(popup).addTo(map));
